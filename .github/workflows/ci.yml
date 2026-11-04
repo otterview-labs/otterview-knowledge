@@ -1,0 +1,119 @@
+name: Source checks
+on:
+  push:
+    branches: [main, test]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: pip install -r requirements-test.txt
+      - run: python -m pytest -q
+      - run: python scripts/scan_secrets.py
+  dependency-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements-native.txt pip-audit
+      - run: python -m pip_audit --format json --output pip-audit.json
+      - run: python scripts/dependency_inventory.py --output dependency-inventory
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-review
+          path: |
+            pip-audit.json
+            dependency-inventory/
+  independent-secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install checksum-verified Gitleaks 8.30.1
+        run: |
+          curl -fsSL https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz -o /tmp/gitleaks.tar.gz
+          echo '551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  /tmp/gitleaks.tar.gz' | sha256sum -c -
+          tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
+      - name: Scan history-free review snapshot
+        run: |
+          python scripts/export_public_snapshot.py --output /tmp/public-source.tar.gz
+          mkdir /tmp/public-source
+          tar -xzf /tmp/public-source.tar.gz -C /tmp/public-source
+          /tmp/gitleaks dir /tmp/public-source --config .gitleaks.toml --redact --no-banner
+  compose-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Boot a fresh workspace and verify its login boundary
+        run: |
+          umask 077
+          cp .env.example .env
+          {
+            printf 'DB_MYSQL_PASSWORD=%s\n' "$(openssl rand -hex 32)"
+            printf 'SECURITY_SECRET_KEY=%s\n' "$(openssl rand -hex 32)"
+            printf 'STARTUP_INITIALIZE_DATABASE_ON_STARTUP=true\n'
+          } >> .env
+          install -d -m 700 .workspace-auth
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          import secrets
+          from pathlib import Path
+          password = secrets.token_hex(24)
+          salt = secrets.token_bytes(16)
+          account = {
+              'origin': 'http://127.0.0.1:18006',
+              'username': 'smoke',
+              'owner_id': 'anonymous',
+              'salt': salt.hex(),
+              'password_hash': hashlib.pbkdf2_hmac('sha256', password.encode(), salt, 600_000).hex(),
+          }
+          Path(os.environ['RUNNER_TEMP'], 'workspace-smoke-password').write_text(password)
+          Path('.workspace-auth/account.json').write_text(json.dumps(account))
+          PY
+          docker compose up -d --build --wait --wait-timeout 120
+          python3 - <<'PY'
+          from http.cookiejar import CookieJar
+          from pathlib import Path
+          from urllib.error import HTTPError
+          from urllib.parse import urlencode
+          from urllib.request import HTTPCookieProcessor, Request, build_opener, urlopen
+          import os
+          base = 'http://127.0.0.1:18006'
+          with urlopen(base + '/') as login:
+              assert login.geturl().endswith('/login') and b'OtterView' in login.read()
+          route = base + '/api/v1/rag/collections/list'
+          payload = b'{"pageIndex":0,"pageSize":20}'
+          def request():
+              return Request(route, data=payload, headers={'Content-Type': 'application/json', 'Origin': base})
+          try:
+              urlopen(request())
+          except HTTPError as error:
+              assert error.code == 401, error.code
+          else:
+              raise AssertionError('Unauthenticated API request was allowed')
+          password = Path(os.environ['RUNNER_TEMP'], 'workspace-smoke-password').read_text()
+          opener = build_opener(HTTPCookieProcessor(CookieJar()))
+          login = Request(base + '/login', data=urlencode({'username':'smoke','password':password}).encode(), headers={'Origin': base})
+          with opener.open(login) as page:
+              assert b'id="workspaceSearch"' in page.read()
+          with opener.open(request()) as result:
+              assert result.status == 200
+          PY
+      - name: Collect startup diagnostics
+        if: failure()
+        run: docker compose logs --tail 100 knowledge
+      - name: Stop smoke services
+        if: always()
+        run: docker compose down -v

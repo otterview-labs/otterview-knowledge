@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OtterView 知识库</title>
+    <link rel="stylesheet" href="/static/css/knowledge-workspace.css?v=20261104">
+    <link rel="stylesheet" href="/static/css/batch-upload.css?v=20261103">
+    <link rel="stylesheet" href="/static/css/document-reader.css?v=20261104">
+</head>
+<body class="knowledge-home">
+    <div class="page">
+        <header class="workspace-header">
+            <a class="wordmark" href="/">OtterView <strong>知识库</strong></a>
+            <div class="header-actions">
+                <button type="button" class="button ghost" id="refreshBtn">刷新</button>
+                <form method="post" action="/logout" id="workspaceLogout" hidden><button class="button ghost" type="submit">退出登录</button></form>
+            </div>
+        </header>
+        <form role="search" class="workspace-search" id="workspaceSearch">
+            <div id="globalSearchControls">
+                        <input id="globalSearch" type="search" aria-label="搜索文档" placeholder="输入关键词进行智能检索">
+                        <details class="search-options"><summary>检索设置</summary><div class="options-panel">
+                        <label for="searchMode">检索方式</label><select id="searchMode" aria-label="检索方式">
+                            <option value="intelligent">智能</option>
+                            <option value="hybrid">混合</option>
+                            <option value="semantic">语义</option>
+                            <option value="keyword">关键词</option>
+                            <option value="kg">知识图谱</option>
+                            <option value="file">文件级</option>
+                            <option value="three_layer_keyword">三层关键词</option>
+                            <option value="three_layer_semantic">三层语义</option>
+                            <option value="three_layer_document">三层文档</option>
+                        </select>
+                        <label for="topK">结果数量</label><input id="topK" aria-label="结果数量" type="number" value="8" min="1" max="50">
+                        </div></details>
+                        <button class="button" id="searchBtn" type="submit">搜索</button>
+                    </div>
+        </form>
+        <div class="layout">
+            <aside class="collection-rail">
+                <h2 class="section-title">集合</h2>
+                <div class="list" id="collectionList"></div>
+                <details class="collection-create">
+                    <summary>新建集合</summary>
+                    <div class="collection-fields">
+                        <label for="collectionName">集合名称</label><input id="collectionName">
+                        <label for="collectionDesc">集合描述（可选）</label><input id="collectionDesc">
+                        <button class="button" id="createCollectionBtn" type="button">创建集合</button>
+                    </div>
+                </details>
+            </aside>
+            <main class="workspace-main">
+                <div class="toolbar view-toolbar">
+                    <div class="tabs" id="viewTabs">
+                        <button type="button" class="tab active" data-tab="docs" aria-controls="docs" aria-pressed="true">文档</button>
+                        <button type="button" class="tab" data-tab="upload" aria-controls="upload" aria-pressed="false">上传</button>
+                        <button type="button" class="tab" data-tab="graph" aria-controls="graph" aria-pressed="false">知识图谱</button>
+                    </div>
+                </div>
+
+                <section class="kr-shell" id="documentReader" aria-labelledby="readerTitle" hidden>
+                    <div class="kr-bar">
+                        <h2 id="readerTitle" data-reader-title>搜索结果</h2>
+                        <button type="button" class="kr-link kr-close" data-reader-close>关闭</button>
+                    </div>
+                    <p class="kr-message" data-reader-status role="status" hidden></p>
+                    <div class="kr-workspace" data-reader-workspace hidden>
+                        <nav class="kr-results" data-reader-results aria-label="搜索结果"></nav>
+                        <section data-reader-detail aria-label="文档详情"></section>
+                    </div>
+                </section>
+                <section id="docs" class="tab-panel">
+                    <div class="toolbar" style="margin-top:0;">
+                        <h1 id="currentCollectionLabel">未选择集合</h1>
+                        <div style="display:flex; gap:8px;">
+                            <button class="button ghost" id="loadDocsBtn">刷新文档</button>
+                            <button class="button ghost" id="deleteCollectionBtn">删除集合</button>
+                        </div>
+                    </div>
+                    <div class="grid" id="documentsGrid"></div>
+                    <div id="documentsEmpty" class="empty" style="display:none;">暂无文档，尝试上传文件。</div>
+                </section>
+
+                <section id="upload" class="tab-panel" style="display:none;">
+                    <div class="upload-drop">
+                        <input type="file" id="fileInput" multiple style="display:none;">
+                        <div style="font-weight:700; margin-bottom:6px;">拖拽或选择文件</div>
+                        <div class="muted small">支持常见文档、图片、视频；先入库检索，后台完善 AI 摘要和知识图谱</div>
+                        <div class="upload-controls">
+                            <input aria-label="上传标题" id="uploadTitle" placeholder="标题（可选）" style="max-width:240px;">
+                            <select aria-label="上传到集合" id="uploadCollection" style="max-width:180px;"></select>
+                            <button class="button secondary" id="pickFileBtn">选择文件</button>
+                            <button class="button" id="uploadBtn">上传</button>
+                        </div>
+                        <p class="muted small" id="selectedFilesLabel">可一次选择多张图片或多个文档</p>
+                        <div id="batchUploadProgress" class="batch-upload" hidden></div>
+                    </div>
+                </section>
+
+                <section id="graph" class="tab-panel" style="display:none;">
+                    <div class="toolbar" style="margin-top:0;">
+                        <h1>知识图谱</h1>
+                        <button class="button" id="loadGraphBtn">加载图谱</button>
+                    </div>
+                    <div class="graph" id="graphArea">
+                        <svg id="graphSvg" width="100%" height="100%"></svg>
+                        <div id="graphEmpty" class="empty" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center;">点击「加载图谱」查看当前集合中的知识关系</div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+    <div class="loading" id="loading" role="status">处理中…</div>
+    <script src="/static/js/batch-upload.js?v=20261103"></script>
+    <script src="/static/js/document-reader.js?v=20261104"></script>
+    <script>
+        const state = {
+            collections: [],
+            currentCollection: null,
+            documents: [],
+            graph: null
+        };
+
+        let workspaceAuth = false;
+        let legacyWorkspace = false;
+        const configuredApiBase = new URLSearchParams(location.search).get('api_base')?.trim().replace(/\/+$/, '') || '';
+
+        function resolveUrl(path) {
+            if (!path) return '';
+            try {
+                const apiBase = legacyWorkspace && configuredApiBase ? configuredApiBase : location.origin;
+                const url = new URL(path, apiBase);
+                return legacyWorkspace || url.origin === location.origin ? url.href : '';
+            } catch (_) {
+                return '';
+            }
+        }
+
+        function resolveMediaUrl(path) {
+            if (!path) return '';
+            try {
+                const url = new URL(path, location.origin);
+                if (url.origin === location.origin) return url.href;
+                if (/^\/(?:uploads|temp\/uploads|static\/uploads|api\/file)\//.test(url.pathname)) {
+                    return new URL(url.pathname + url.search, location.origin).href;
+                }
+            } catch (_) {}
+            return '';
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast');
+            const div = document.createElement('div');
+            div.className = `toast ${type}`;
+            div.textContent = message;
+            container.appendChild(div);
+            setTimeout(() => div.remove(), 3500);
+        }
+
+        function setLoading(visible) {
+            document.getElementById('loading').style.display = visible ? 'flex' : 'none';
+        }
+
+        async function api(path, {quiet = false, ...options} = {}) {
+            const opts = { ...options, headers: { ...options.headers } };
+            if (!(opts.body instanceof FormData) && opts.method && opts.method.toUpperCase() !== 'GET') {
+                opts.headers['Content-Type'] = 'application/json';
+            }
+            try {
+                const url = resolveUrl(path);
+                if (!url) throw new Error('此链接不属于当前知识库');
+                if (legacyWorkspace && new URL(url).origin === location.origin && !opts.headers.Authorization) {
+                    const token = localStorage.getItem('authToken');
+                    if (token) opts.headers.Authorization = `Bearer ${token}`;
+                }
+                const res = await fetch(url, opts);
+                if (!res.ok) {
+                    if (res.status === 401 && !document.getElementById('workspaceLogout').hidden) location.assign('/login');
+                    let detail = '';
+                    try {
+                        const err = await res.json();
+                        if (typeof err === 'string') {
+                            detail = err;
+                        } else if (err && typeof err.detail === 'string') {
+                            detail = err.detail;
+                        } else if (err && err.detail) {
+                            detail = JSON.stringify(err.detail);
+                        } else if (err && err.message) {
+                            detail = String(err.message);
+                        } else {
+                            detail = JSON.stringify(err);
+                        }
+                    } catch (_) {
+                        try {
+                            detail = (await res.text()) || '';
+                        } catch (_) {
+                            detail = '';
+                        }
+                    }
+                    throw new Error(detail ? `HTTP ${res.status}: ${detail}` : `HTTP ${res.status}`);
+                }
+                const json = await res.json();
+                return json;
+            } catch (e) {
+                if (!quiet) showToast(e.message || '请求失败', 'error');
+                throw e;
+            }
+        }
+
+        const documentReader = new KnowledgeDocumentReader(document.getElementById('documentReader'), api, resolveMediaUrl);
+        let searchRequest;
+
+        function resetSearch() {
+            searchRequest?.abort();
+            searchRequest = null;
+            documentReader.close();
+        }
+
+        function unwrap(res) {
+            if (!res) return null;
+            if (res.result && res.result.data) return res.result.data;
+            if (res.result && Array.isArray(res.result)) return res.result;
+            if (res.result) return res.result;
+            if (res.data) return res.data;
+            return res;
+        }
+
+        async function loadCollections() {
+            setLoading(true);
+            try {
+                const payload = { pageIndex: 0, pageSize: 20, sorts: [{ name: "createTime", order: "desc" }], terms: [] };
+                const res = await api('/api/v1/rag/collections/list', { method: 'POST', body: JSON.stringify(payload) });
+                state.collections = unwrap(res)?.data || unwrap(res) || [];
+                renderCollections();
+                populateCollectionSelect();
+                if (!state.currentCollection && state.collections.length > 0) {
+                    selectCollection(state.collections[0].id);
+                }
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function renderCollections() {
+            const list = document.getElementById('collectionList');
+            list.innerHTML = '';
+            if (!state.collections.length) {
+                list.innerHTML = '<div class="empty">暂无集合，请先创建</div>';
+                return;
+            }
+            state.collections.forEach(col => {
+                const div = document.createElement('button');
+                div.type = 'button';
+                const selected = state.currentCollection === col.id;
+                div.className = 'collection' + (selected ? ' active' : '');
+                div.setAttribute('aria-pressed', String(selected));
+                div.onclick = () => selectCollection(col.id);
+                const label = document.createElement('span');
+                label.className = 'collection-name';
+                label.textContent = col.name || '未命名集合';
+                const count = document.createElement('span');
+                count.className = 'pill';
+                count.textContent = `${col.document_count ?? col.doc_count ?? 0} 篇`;
+                div.append(label, count);
+                list.appendChild(div);
+            });
+        }
+
+        async function createCollection() {
+            const name = document.getElementById('collectionName').value.trim();
+            const description = document.getElementById('collectionDesc').value.trim();
+            if (!name) return showToast('请输入集合名称', 'error');
+            setLoading(true);
+            try {
+                await api('/api/v1/rag/collections/', {
+                    method: 'POST',
+                    body: JSON.stringify({ name, description, collection_type: 'text' })
+                });
+                showToast('集合创建成功', 'success');
+                document.getElementById('collectionName').value = '';
+                document.getElementById('collectionDesc').value = '';
+                await loadCollections();
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        async function deleteCollection() {
+            if (!state.currentCollection) return showToast('请先选择集合', 'error');
+            if (!confirm('确定删除该集合及其文档吗？')) return;
+            setLoading(true);
+            try {
+                await api('/api/v1/rag/collections/delete', {
+                    method: 'POST',
+                    body: JSON.stringify({ collection_id: state.currentCollection })
+                });
+                showToast('集合已删除', 'success');
+                state.currentCollection = null;
+                await loadCollections();
+                renderDocuments([]);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function selectCollection(id) {
+            if (id !== state.currentCollection) resetSearch();
+            state.currentCollection = id;
+            const current = state.collections.find(c => c.id === id);
+            document.getElementById('currentCollectionLabel').textContent = current ? current.name : '未选择';
+            renderCollections();
+            populateCollectionSelect();
+            loadDocuments();
+        }
+
+        async function loadDocuments() {
+            if (!state.currentCollection) return;
+            setLoading(true);
+            try {
+                const payload = {
+                    collection_id: state.currentCollection,
+                    pageIndex: 0,
+                    pageSize: 30,
+                    sorts: [{ name: "createTime", order: "desc" }],
+                    terms: []
+                };
+                const res = await api('/api/v1/rag/collections/documents', {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                state.documents = unwrap(res)?.data || unwrap(res) || [];
+                renderDocuments(state.documents);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function renderDocuments(docs) {
+            const grid = document.getElementById('documentsGrid');
+            const empty = document.getElementById('documentsEmpty');
+            grid.innerHTML = '';
+            if (!docs || docs.length === 0) {
+                empty.style.display = 'block';
+                return;
+            }
+            empty.style.display = 'none';
+            docs.forEach(doc => {
+                const status = (doc.processing_status || doc.status || 'completed').toLowerCase();
+                const statusClass = status.includes('fail') ? 'failed' : status.includes('process') || status.includes('pending') ? 'processing' : 'success';
+                const statusText = status.includes('fail') ? '处理失败' : status.includes('process') ? '处理中' : status.includes('pending') ? '排队中' : '已完成';
+                const type = detectType(doc.mime_type || doc.type || doc.content_type || doc.file_type);
+                const size = formatBytes(doc.file_size || doc.size || 0);
+                const detail = doc.error_message || doc.error || doc.processing_error || doc.description || doc.summary || '暂无简介';
+                const created = doc.create_time || doc.created_at || doc.createTime;
+                const createdText = created ? (' · ' + formatDate(created)) : '';
+                const displayTitle = getDisplayTitle(doc);
+                const card = document.createElement('div');
+                card.className = 'doc';
+                const open = () => {
+                    searchRequest?.abort();
+                    documentReader.openDocument(doc, card);
+                };
+                card.tabIndex = 0;
+                card.setAttribute('role', 'button');
+                card.onclick = open;
+                card.onkeydown = event => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        open();
+                    }
+                };
+                card.innerHTML = `
+                    <div class="doc-icon">${type.slice(0,1)}</div>
+                    <div style="display:flex; flex-direction:column; gap:4px;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <h4 style="flex:1;"></h4>
+                            <span class="pill" style="background:#eef2ff; color:#4338ca;">${type}</span>
+                        </div>
+                        <div class="muted small" data-doc-description style="white-space:pre-line;"></div>
+                        <div class="muted small">大小：${size}${createdText ? createdText : ''}</div>
+                    </div>
+                    <div class="status ${statusClass}" style="justify-self:end;">${statusText}</div>
+                `;
+                card.querySelector('h4').textContent = displayTitle;
+                card.querySelector('[data-doc-description]').textContent = detail;
+                grid.appendChild(card);
+            });
+        }
+
+        function getDisplayTitle(doc) {
+            const raw = doc.title || doc.name || doc.file_name || '未命名文档';
+            if (!raw.includes('?')) return raw;
+            return raw.split('?')[0];
+        }
+
+        function formatBytes(bytes) {
+            if (!bytes) return '0 KB';
+            const sizes = ['B','KB','MB','GB'];
+            const i = Math.min(sizes.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
+            return (bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1) + ' ' + sizes[i];
+        }
+
+        function detectType(mime) {
+            const m = (mime || '').toLowerCase();
+            if (m === 'document') return '文档';
+            if (m === 'image') return '图片';
+            if (m === 'video') return '视频';
+            if (m.includes('pdf')) return 'PDF';
+            if (m.includes('word') || m.includes('doc')) return 'Word';
+            if (m.includes('ppt')) return 'PPT';
+            if (m.includes('excel') || m.includes('sheet') || m.includes('xls')) return 'Excel';
+            if (m.includes('image') || m.includes('.png') || m.includes('.jpg') || m.includes('.jpeg')) return '图片';
+            if (m.includes('audio') || m.includes('.mp3') || m.includes('.wav')) return '音频';
+            if (m.includes('video') || m.includes('.mp4') || m.includes('.mov')) return '视频';
+            if (m.includes('text') || m.includes('txt') || m.includes('markdown')) return '文本';
+            return '文件';
+        }
+
+        function formatDate(v) {
+            const d = new Date(v);
+            if (Number.isNaN(d.getTime())) return '';
+            return `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
+        }
+
+        function populateCollectionSelect() {
+            const sel = document.getElementById('uploadCollection');
+            sel.innerHTML = '';
+            state.collections.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = c.name;
+                if (c.id === state.currentCollection) opt.selected = true;
+                sel.appendChild(opt);
+            });
+        }
+
+        function pickFile() {
+            document.getElementById('fileInput').click();
+        }
+
+        async function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            if (!fileInput.files.length) return showToast('请先选择文件', 'error');
+            const files = Array.from(fileInput.files);
+            const title = document.getElementById('uploadTitle').value.trim();
+            const collectionId = document.getElementById('uploadCollection').value || state.currentCollection || 'default';
+            const panel = document.getElementById('batchUploadProgress');
+            const controls = ['uploadBtn', 'pickFileBtn', 'uploadTitle', 'uploadCollection', 'fileInput'].map(id => document.getElementById(id));
+            controls.forEach(control => control.disabled = true);
+            try {
+                const result = await KnowledgeBatchUpload.run({files, collectionId, title, request: api,
+                    onUpdate: snapshot => KnowledgeBatchUpload.render(panel, snapshot)});
+                showToast(`已可检索 ${result.completed} 个文件${result.failed ? `，失败 ${result.failed} 个，请查看详情` : ''}`, result.failed ? 'error' : 'success');
+                if (!result.failed) {
+                    fileInput.value = '';
+                    document.getElementById('selectedFilesLabel').textContent = '可一次选择多张图片或多个文档';
+                }
+                await loadDocuments();
+            } catch (error) {
+                const message = document.createElement('p');
+                message.setAttribute('role', 'alert');
+                message.textContent = error.message;
+                panel.hidden = false; panel.append(message);
+                showToast(error.message, 'error');
+            } finally {
+                controls.forEach(control => control.disabled = false);
+            }
+        }
+
+        async function runSearch() {
+            const input = document.getElementById('globalSearch');
+            const query = input.value.trim();
+            if (!query) {
+                input.focus();
+                return showToast('请输入查询', 'error');
+            }
+            resetSearch();
+            const request = searchRequest = new AbortController();
+            const mode = document.getElementById('searchMode').value;
+            const top_k = Math.min(50, Math.max(1, parseInt(document.getElementById('topK').value, 10) || 8));
+            documentReader.title.textContent = '搜索结果';
+            documentReader.show(input, false);
+            documentReader.message('正在搜索…');
+            try {
+                const payload = {
+                    query,
+                    search_mode: mode,
+                    top_k,
+                    include_content: false,
+                    include_snippet: true,
+                    collection_id: state.currentCollection ? [state.currentCollection] : null
+                };
+                if (mode === 'kg') {
+                    payload.kg_config = {search_type: 'entity', max_depth: 2, include_relations: true};
+                }
+                const res = await api('/api/v1/rag/search/unified', {
+                    method: 'POST',
+                    body: JSON.stringify(payload),
+                    signal: request.signal,
+                    quiet: true,
+                });
+                if (request.signal.aborted || documentReader.root.hidden) return;
+                const items = res.results ?? res.result?.results ?? res.result;
+                if (!Array.isArray(items)) throw new Error('搜索结果格式无效');
+                documentReader.showResults(items, query);
+            } catch (error) {
+                if (!request.signal.aborted && !documentReader.root.hidden) {
+                    documentReader.message('搜索失败，请稍后重试。');
+                }
+            }
+        }
+
+        function loadD3() {
+            if (window.d3) return Promise.resolve();
+            return new Promise((resolve, reject) => {
+                const s = document.createElement('script');
+                s.src = 'https://d3js.org/d3.v7.min.js';
+                s.onload = () => resolve();
+                s.onerror = () => reject(new Error('D3加载失败'));
+                document.head.appendChild(s);
+            });
+        }
+
+        async function loadGraph() {
+            if (!state.currentCollection) return showToast('请先选择集合', 'error');
+            setLoading(true);
+            try {
+                const payload = { collection_id: state.currentCollection, max_nodes: 120 };
+                const res = await api('/api/v1/rag/kg/visualization/graph-data', {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                const result = unwrap(res);
+                state.graph = result;
+                if (result?.nodes?.length) await loadD3();
+                renderGraph(result);
+            } catch (e) {
+                showToast('加载图谱失败', 'error');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function renderGraph(data) {
+            document.getElementById('graphSvg').replaceChildren();
+            const empty = document.getElementById('graphEmpty');
+            if (!data || !data.nodes || data.nodes.length === 0) {
+                empty.textContent = '当前集合暂无可显示的知识关系。';
+                empty.style.display = 'flex';
+                return;
+            }
+            const svg = d3.select('#graphSvg');
+            empty.style.display = 'none';
+            const width = svg.node().clientWidth || 800;
+            const height = svg.node().clientHeight || 380;
+            const links = data.links.map(d => Object.assign({}, d));
+            const nodes = data.nodes.map(d => Object.assign({}, d));
+
+            const simulation = d3.forceSimulation(nodes)
+                .force("link", d3.forceLink(links).id(d => d.id).distance(80))
+                .force("charge", d3.forceManyBody().strength(-150))
+                .force("center", d3.forceCenter(width / 2, height / 2));
+
+            const link = svg.append("g")
+                .attr("stroke", "#cbd5e1")
+                .attr("stroke-width", 1.2)
+                .selectAll("line")
+                .data(links)
+                .join("line");
+
+            const node = svg.append("g")
+                .selectAll("circle")
+                .data(nodes)
+                .join("circle")
+                .attr("r", 8)
+                .attr("fill", "#2563eb")
+                .attr("stroke", "#fff")
+                .attr("stroke-width", 2)
+                .call(d3.drag()
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended));
+
+            const label = svg.append("g")
+                .selectAll("text")
+                .data(nodes)
+                .join("text")
+                .text(d => d.name || d.id)
+                .attr("font-size", 11)
+                .attr("fill", "#0f172a");
+
+            simulation.on("tick", () => {
+                link
+                    .attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x)
+                    .attr("y2", d => d.target.y);
+                node
+                    .attr("cx", d => d.x)
+                    .attr("cy", d => d.y);
+                label
+                    .attr("x", d => d.x + 10)
+                    .attr("y", d => d.y + 4);
+            });
+
+            function dragstarted(event, d) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+            function dragged(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+            function dragended(event, d) {
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }
+        }
+
+        function bindTabs() {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    resetSearch();
+                    document.querySelectorAll('#viewTabs .tab').forEach(t => {
+                        t.classList.toggle('active', t === tab);
+                        t.setAttribute('aria-pressed', String(t === tab));
+                    });
+                    document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+                    document.getElementById(tab.dataset.tab).style.display = 'block';
+                });
+            });
+        }
+
+        function bindEvents() {
+            document.getElementById('createCollectionBtn').onclick = createCollection;
+            document.getElementById('deleteCollectionBtn').onclick = deleteCollection;
+            document.getElementById('loadDocsBtn').onclick = loadDocuments;
+            document.getElementById('pickFileBtn').onclick = pickFile;
+            const dropArea = document.querySelector('.upload-drop');
+            dropArea.addEventListener('dragover', event => {
+                event.preventDefault();
+                if (!document.getElementById('fileInput').disabled) dropArea.classList.add('is-dragover');
+            });
+            dropArea.addEventListener('dragleave', () => dropArea.classList.remove('is-dragover'));
+            dropArea.addEventListener('drop', event => {
+                event.preventDefault(); dropArea.classList.remove('is-dragover');
+                const input = document.getElementById('fileInput');
+                if (input.disabled) return;
+                input.files = event.dataTransfer.files;
+                input.dispatchEvent(new Event('change'));
+            });
+            document.getElementById('uploadBtn').onclick = uploadFile;
+            document.getElementById('fileInput').onchange = event => {
+                const files = Array.from(event.target.files);
+                document.getElementById('selectedFilesLabel').textContent = files.length ? `已选择 ${files.length} 个文件：${files.slice(0, 3).map(file => file.name).join('、')}${files.length > 3 ? '…' : ''}` : '可一次选择多张图片或多个文档';
+            };
+            document.getElementById('workspaceSearch').addEventListener('submit', event => {
+                event.preventDefault();
+                if (event.isComposing) return;
+                document.querySelector('.search-options').open = false;
+                runSearch();
+            });
+            document.getElementById('loadGraphBtn').onclick = loadGraph;
+            document.getElementById('refreshBtn').onclick = async () => {
+                await loadCollections();
+                await loadDocuments();
+            };
+
+        }
+
+        async function init() {
+            bindTabs();
+            bindEvents();
+            const session = await fetch('/workspace/session', {cache:'no-store'}).catch(() => null);
+            workspaceAuth = session?.ok === true;
+            legacyWorkspace = session?.status === 404;
+            document.getElementById('workspaceLogout').hidden = !workspaceAuth;
+            await loadCollections();
+        }
+
+        init().catch(() => {});
+    </script>
+</body>
+</html>

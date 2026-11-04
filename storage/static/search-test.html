@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能检索 - JetLinks AI</title>
+    <link rel="stylesheet" href="/static/css/common.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f7fafc;
+            min-height: 100vh;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0;
+        }
+
+        /* 顶部导航栏 */
+        .top-header {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 16px 30px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .breadcrumb a {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        .back-btn {
+            padding: 8px 16px;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            color: #475569;
+            text-decoration: none;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            background: #e2e8f0;
+        }
+
+        /* 主内容区 */
+        .main-content {
+            padding: 30px;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .page-header h1 {
+            font-size: 36px;
+            color: #1e293b;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .page-header p {
+            font-size: 16px;
+            color: #64748b;
+        }
+
+        /* 搜索区域 */
+        .search-section {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .search-input-wrapper {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .search-input-group {
+            flex: 1;
+            position: relative;
+        }
+
+        .search-input-group i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 16px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 14px 20px 14px 45px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .search-btn {
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
+        }
+
+        .search-btn:active {
+            transform: translateY(0);
+        }
+
+        /* 搜索选项 */
+        .search-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .option-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .option-group label {
+            font-size: 14px;
+            color: #475569;
+            font-weight: 500;
+        }
+
+        .option-group select,
+        .option-group input[type="text"] {
+            padding: 10px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .option-group select:focus,
+        .option-group input[type="text"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .threshold-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .threshold-group input[type="range"] {
+            flex: 1;
+        }
+
+        .threshold-value {
+            min-width: 40px;
+            text-align: center;
+            font-weight: 600;
+            color: #3b82f6;
+        }
+
+        /* 快捷操作 */
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .quick-btn {
+            padding: 8px 16px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-btn:hover {
+            background: #e2e8f0;
+        }
+
+        /* 结果区域 */
+        .results-section {
+            display: none;
+        }
+
+        .results-section.show {
+            display: block;
+        }
+
+        .results-header {
+            background: white;
+            border-radius: 12px 12px 0 0;
+            padding: 20px 30px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .results-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .results-stats {
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .results-stats strong {
+            color: #3b82f6;
+            font-size: 16px;
+        }
+
+        .results-container {
+            background: white;
+            border-radius: 0 0 12px 12px;
+            padding: 0 30px 30px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 加载状态 */
+        .loading-state {
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        .loading-state i {
+            font-size: 48px;
+            color: #3b82f6;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-state p {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #64748b;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        .empty-state i {
+            font-size: 64px;
+            color: #cbd5e0;
+            margin-bottom: 20px;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            color: #475569;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        /* 搜索结果项 */
+        .result-item {
+            padding: 24px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .result-item:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .result-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .result-title i {
+            color: #3b82f6;
+            font-size: 20px;
+        }
+
+        .result-meta {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .result-meta span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .result-meta i {
+            color: #94a3b8;
+        }
+
+        .result-snippet {
+            font-size: 14px;
+            color: #475569;
+            line-height: 1.7;
+            margin-bottom: 12px;
+        }
+
+        .result-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .search-badge {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .search-badge-keyword {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .search-badge-semantic {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .search-badge-hybrid {
+            background: #e0e7ff;
+            color: #4338ca;
+        }
+
+        .search-badge-similarity {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .result-content {
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: #475569;
+            line-height: 1.8;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            display: none;
+        }
+
+        .result-content.show {
+            display: block;
+        }
+
+        /* 搜索建议 */
+        .suggestions {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .suggestions h4 {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 12px;
+        }
+
+        .suggestion-tags {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .suggestion-tag {
+            padding: 8px 16px;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .suggestion-tag:hover {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 20px;
+            }
+
+            .search-input-wrapper {
+                flex-direction: column;
+            }
+
+            .search-options {
+                grid-template-columns: 1fr;
+            }
+
+            .results-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航 -->
+    <div class="top-header">
+        <div class="header-content">
+            <div class="breadcrumb">
+                <a href="/static/dashboard.html">JetLinksAI</a>
+                <span>/</span>
+                <a href="/static/knowledge-base.html">知识库</a>
+                <span>/</span>
+                <span style="color: #1e293b;">智能检索</span>
+            </div>
+            <a href="/static/knowledge-base.html" class="back-btn">
+                <i class="fas fa-arrow-left"></i>
+                返回知识库
+            </a>
+        </div>
+    </div>
+
+    <!-- 主内容 -->
+    <div class="container">
+        <div class="main-content">
+            <!-- 页面标题 -->
+            <div class="page-header">
+                <h1><i class="fas fa-brain"></i> 智能检索</h1>
+                <p>基于AI的智能语义搜索，支持多种搜索模式和高级选项</p>
+            </div>
+
+            <!-- 搜索区域 -->
+            <div class="search-section">
+                <div class="search-input-wrapper">
+                    <div class="search-input-group">
+                        <i class="fas fa-search"></i>
+                        <input type="text"
+                               id="globalSearchInput"
+                               class="search-input"
+                               placeholder="输入搜索内容，支持智能语义理解..."
+                               onkeypress="if(event.key==='Enter') performAdvancedSearch()">
+                    </div>
+                    <button class="search-btn" onclick="performAdvancedSearch()">
+                        <i class="fas fa-magic"></i>
+                        智能搜索
+                    </button>
+                </div>
+
+                <div class="search-options">
+                    <div class="option-group">
+                        <label><i class="fas fa-layer-group"></i> 选择知识库 (可多选)</label>
+                        <select id="collectionSelect" multiple style="height: 120px;">
+                            <option value="">正在加载知识库列表...</option>
+                        </select>
+                        <small style="color: #64748b; font-size: 12px; margin-top: 5px; display: block;">
+                            按住 Ctrl/Cmd 可多选，不选则搜索所有知识库
+                        </small>
+                    </div>
+
+                    <div class="option-group">
+                        <label><i class="fas fa-sliders-h"></i> 搜索类型</label>
+                        <select id="searchTypeSelect">
+                            <option value="intelligent">🤖 智能模式 (自动选择)</option>
+                            <option value="hybrid">🔀 混合搜索</option>
+                            <option value="semantic">🧠 语义搜索</option>
+                            <option value="keyword">🔍 关键词搜索</option>
+                            <option value="kg">🕸️ 知识图谱</option>
+                            <option value="file">📄 文件级检索</option>
+                            <option value="three_layer_keyword">3️⃣ 三层-关键词</option>
+                            <option value="three_layer_semantic">3️⃣ 三层-语义</option>
+                            <option value="three_layer_document">3️⃣ 三层-文档</option>
+                        </select>
+                    </div>
+
+                    <div class="option-group">
+                        <label><i class="fas fa-list-ol"></i> 结果数量</label>
+                        <select id="searchTopK">
+                            <option value="5">5个结果</option>
+                            <option value="10" selected>10个结果</option>
+                            <option value="20">20个结果</option>
+                            <option value="50">50个结果</option>
+                        </select>
+                    </div>
+
+                    <div class="option-group">
+                        <label><i class="fas fa-percentage"></i> 相似度阈值</label>
+                        <div class="threshold-group">
+                            <input type="range"
+                                   id="similarityThreshold"
+                                   min="0"
+                                   max="1"
+                                   step="0.05"
+                                   value="0"
+                                   oninput="updateThresholdValue(this.value)">
+                            <span class="threshold-value" id="thresholdValue">0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+                    <button class="quick-btn" onclick="clearSearch()">
+                        <i class="fas fa-eraser"></i> 清空
+                    </button>
+                    <button class="quick-btn" onclick="checkSearchStatus()">
+                        <i class="fas fa-info-circle"></i> 系统状态
+                    </button>
+                </div>
+            </div>
+
+            <!-- 搜索结果区域 -->
+            <div class="results-section" id="resultsSection">
+                <div class="results-header">
+                    <div class="results-title">
+                        <i class="fas fa-list-ul"></i>
+                        搜索结果
+                    </div>
+                    <div class="results-stats" id="searchStatsDisplay"></div>
+                </div>
+                <div class="results-container" id="searchResultsContent">
+                    <!-- 结果将在这里动态渲染 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/common.js"></script>
+    <script>
+        // 更新阈值显示
+        function updateThresholdValue(value) {
+            document.getElementById('thresholdValue').textContent = parseFloat(value).toFixed(2);
+        }
+
+        // 清空搜索
+        function clearSearch() {
+            document.getElementById('globalSearchInput').value = '';
+            document.getElementById('collectionSelect').selectedIndex = -1; // 清空选择
+            document.getElementById('resultsSection').classList.remove('show');
+            document.getElementById('globalSearchInput').focus();
+        }
+
+        // 执行高级搜索
+        async function performAdvancedSearch(customQuery = null) {
+            console.log('🔍 performAdvancedSearch 被调用');
+
+            const query = customQuery || document.getElementById('globalSearchInput').value.trim();
+            const searchType = document.getElementById('searchTypeSelect').value;
+            const topK = parseInt(document.getElementById('searchTopK').value);
+            const threshold = parseFloat(document.getElementById('similarityThreshold').value);
+
+            // 获取选中的知识库ID列表
+            const collectionSelect = document.getElementById('collectionSelect');
+            const selectedOptions = Array.from(collectionSelect.selectedOptions);
+            const collectionId = selectedOptions
+                .map(option => option.value)
+                .filter(value => value !== ''); // 过滤空值
+
+            console.log('📝 搜索参数:', {
+                query: query,
+                searchType: searchType,
+                topK: topK,
+                threshold: threshold,
+                collectionId: collectionId
+            });
+
+            if (!query) {
+                alert('请输入搜索内容');
+                return;
+            }
+
+            const resultsSection = document.getElementById('resultsSection');
+            const resultsContent = document.getElementById('searchResultsContent');
+
+            console.log('📦 DOM元素:', {
+                resultsSection: !!resultsSection,
+                resultsContent: !!resultsContent
+            });
+
+            // 显示加载状态
+            resultsSection.classList.add('show');
+            resultsContent.innerHTML = `
+                <div class="loading-state">
+                    <i class="fas fa-spinner"></i>
+                    <p>正在搜索中，请稍候...</p>
+                </div>
+            `;
+            console.log('⏳ 显示加载状态');
+
+            try {
+                const requestBody = {
+                    query: query,
+                    search_mode: searchType,
+                    top_k: topK,
+                    similarity_threshold: threshold,
+                    include_content: true,
+                    include_snippet: true,
+                    include_metadata: true,
+                    collection_id: collectionId
+                };
+
+                console.log('📤 发送请求:', requestBody);
+                console.log('🌐 请求URL:', '/api/v1/rag/search/unified');
+
+                const response = await fetch('/api/v1/rag/search/unified', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                console.log('📥 收到响应:', response.status, response.statusText);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP错误: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                console.log('📊 响应数据:', data);
+                console.log('📈 结果数量:', data.total, '个');
+
+                displaySearchResults(data);
+
+            } catch (error) {
+                console.error('❌ 搜索失败:', error);
+                resultsContent.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>搜索失败</h3>
+                        <p>${error.message}</p>
+                        <pre style="text-align: left; font-size: 12px; margin-top: 10px;">${error.stack}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        // 显示搜索结果
+        function displaySearchResults(data) {
+            const resultsContent = document.getElementById('searchResultsContent');
+            const statsDisplay = document.getElementById('searchStatsDisplay');
+
+            const executionInfo = data.execution_info || {};
+            const searchMode = data.search_mode || 'unknown';
+
+            // 更新统计信息
+            statsDisplay.innerHTML = `
+                找到 <strong>${data.total || 0}</strong> 个相关文档 |
+                搜索模式: <strong>${searchMode}</strong> |
+                执行时间: <strong>${executionInfo.execution_time_ms || 'N/A'}ms</strong>
+            `;
+
+            if (!data.results || data.results.length === 0) {
+                resultsContent.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-search-minus"></i>
+                        <h3>未找到相关内容</h3>
+                        <p>尝试使用不同的关键词或搜索模式</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+
+            data.results.forEach((result, index) => {
+                const searchType = result.search_mode || result.search_type || 'unknown';
+                const similarity = result.similarity_score || result.hybrid_score || 0;
+
+                html += `
+                    <div class="result-item" onclick="toggleContent(${index})">
+                        <div class="result-title">
+                            <i class="fas fa-file-alt"></i>
+                            ${result.title || '未命名文档'}
+                        </div>
+                        <div class="result-meta">
+                            <span><i class="fas fa-tag"></i> ${result.content_type || '文档'}</span>
+                            ${result.metadata?.file_size ? `<span><i class="fas fa-hdd"></i> ${formatFileSize(result.metadata.file_size)}</span>` : ''}
+                            ${result.metadata?.upload_time ? `<span><i class="fas fa-clock"></i> ${formatDate(result.metadata.upload_time)}</span>` : ''}
+                            ${result.collection_id ? `<span><i class="fas fa-folder"></i> ${result.collection_id.substring(0, 16)}...</span>` : ''}
+                        </div>
+                        <div class="result-snippet">${result.snippet || result.description || '暂无内容预览'}</div>
+                        <div class="result-badges">
+                            <span class="search-badge search-badge-${searchType}">${searchType.toUpperCase()}</span>
+                            ${similarity > 0 ? `<span class="search-badge search-badge-similarity">相似度: ${(similarity * 100).toFixed(1)}%</span>` : ''}
+                        </div>
+                        <div class="result-content" id="content-${index}">
+${result.content || '无完整内容'}
+                        </div>
+                    </div>
+                `;
+            });
+
+            // 添加搜索建议
+            if (data.suggestions && data.suggestions.length > 0) {
+                html += `
+                    <div class="suggestions">
+                        <h4><i class="fas fa-lightbulb"></i> 相关搜索建议:</h4>
+                        <div class="suggestion-tags">
+                            ${data.suggestions.map(s => `
+                                <span class="suggestion-tag" onclick="searchSuggestion('${s.replace(/'/g, "\\'")}')">
+                                    ${s}
+                                </span>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            resultsContent.innerHTML = html;
+        }
+
+        // 切换内容显示
+        function toggleContent(index) {
+            const content = document.getElementById(`content-${index}`);
+            content.classList.toggle('show');
+        }
+
+        // 搜索建议
+        function searchSuggestion(query) {
+            document.getElementById('globalSearchInput').value = query;
+            performAdvancedSearch(query);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 检查搜索系统状态
+        async function checkSearchStatus() {
+            try {
+                const response = await fetch('/api/v1/rag/search/stats');
+                const data = await response.json();
+
+                if (data.success || data.result) {
+                    const result = data.result || data;
+                    alert(`搜索系统状态:\n\n` +
+                          `向量数据库: ${result.vector_db_available ? '✅ 可用' : '❌ 不可用'}\n` +
+                          `嵌入模型: ${result.embedding_model_available ? '✅ 可用' : '❌ 不可用'}\n` +
+                          `语义搜索: ${result.features?.semantic_search ? '✅ 支持' : '❌ 不支持'}\n` +
+                          `知识图谱: ${result.features?.kg_search ? '✅ 支持' : '❌ 不支持'}`
+                    );
+                } else {
+                    alert('无法获取系统状态');
+                }
+            } catch (error) {
+                alert('检查状态失败: ' + error.message);
+            }
+        }
+
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        // 格式化日期
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hour = String(date.getHours()).padStart(2, '0');
+            const minute = String(date.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day} ${hour}:${minute}`;
+        }
+
+        // 加载知识库列表
+        async function loadCollections() {
+            const collectionSelect = document.getElementById('collectionSelect');
+            try {
+                console.log('📚 开始加载知识库列表...');
+
+                const response = await fetch('/api/v1/rag/collections/list', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        pageIndex: 0,
+                        pageSize: 100  // API限制最大100
+                    })
+                });
+
+                console.log('📡 响应状态:', response.status, response.statusText);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('❌ API错误响应:', errorText);
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}\n${errorText}`);
+                }
+
+                const data = await response.json();
+                console.log('📚 知识库数据:', data);
+
+                // 根据实际响应调整数据提取
+                if (data.message === 'success' && data.result) {
+                    console.log('✅ 使用标准响应格式: data.result.data');
+                }
+
+                // 支持多种数据格式
+                let collections = [];
+                if (data.message === 'success' && data.result && data.result.data) {
+                    // 标准响应格式: {message: 'success', result: {data: [...]}}
+                    collections = data.result.data;
+                } else if (data.success && data.result && data.result.data) {
+                    // 备用格式: {success: true, result: {data: [...]}}
+                    collections = data.result.data;
+                } else if (Array.isArray(data.result)) {
+                    collections = data.result;
+                } else if (Array.isArray(data)) {
+                    collections = data;
+                }
+                console.log('📦 提取到的集合:', collections);
+
+                console.log('📚 找到', collections.length, '个知识库');
+
+                collectionSelect.innerHTML = '';
+
+                if (collections.length === 0) {
+                    collectionSelect.innerHTML = '<option value="">暂无知识库</option>';
+                } else {
+                    collections.forEach(col => {
+                        const option = document.createElement('option');
+                        option.value = col.id;
+                        const name = col.name || col.id;
+                        const idShort = col.id.substring(0, 8);
+                        option.textContent = `${name} (${idShort}...)`;
+                        option.title = `ID: ${col.id}`; // 鼠标悬停显示完整ID
+                        collectionSelect.appendChild(option);
+                    });
+                }
+
+                console.log('✅ 知识库列表加载完成');
+            } catch (error) {
+                console.error('❌ 加载知识库列表失败:', error);
+                collectionSelect.innerHTML = `<option value="">加载失败: ${error.message}</option>`;
+            }
+        }
+
+        // 页面加载时自动聚焦搜索框并加载知识库列表
+        window.onload = function() {
+            document.getElementById('globalSearchInput').focus();
+            loadCollections(); // 加载知识库列表
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+.batch-upload { margin-top: 20px; text-align: left; color: #1e293b; }
+.batch-upload[hidden] { display: none; }
+.batch-upload-heading { margin: 0 0 10px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.batch-upload progress { width: 100%; height: 10px; accent-color: #2563eb; }
+.batch-upload-note { margin: 10px 0 14px; color: #475569; font-size: 13px; line-height: 1.6; }
+.batch-upload-list { list-style: none; padding: 0; margin: 0; max-height: 320px; overflow-y: auto; }
+.batch-upload-list li { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 9px 0; border-bottom: 1px solid #e2e8f0; font-size: 13px; }
+.batch-upload-list li > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.batch-upload-state { flex-shrink: 0; max-width: 65%; overflow-wrap: anywhere; color: #475569; }
+.batch-upload-state.completed { color: #166534; }
+.batch-upload-state.failed { color: #b91c1c; }
+.upload-controls { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; justify-content: center; }
+.upload-controls input, .upload-controls select { min-width: 0; }
+@media (max-width: 640px) {
+    .batch-upload-list li { flex-wrap: wrap; gap: 4px; }
+    .batch-upload-state { max-width: 100%; }
+    .upload-controls > input, .upload-controls > select { width: 100%; max-width: none !important; }
+}
+.knowledge-home .layout > * { min-width: 0; }
+.knowledge-home .tab { border: 0; background: transparent; font: inherit; cursor: pointer; }
+.knowledge-home .tab.active { background: #eff6ff; }
+.knowledge-home .tab:focus-visible, .knowledge-home .button:focus-visible { outline: 2px solid #2563eb; outline-offset: 3px; }
+.knowledge-home .upload-drop.is-dragover { border-color: #2563eb; background: #eff6ff; }
+@media (max-width: 640px) {
+    .knowledge-home .page { padding: 16px 12px 32px; }
+    .knowledge-home header { padding: 14px; gap: 10px; }
+    .knowledge-home .brand { min-width: 0; }
+    .knowledge-home .brand .badge { flex-shrink: 0; }
+    .knowledge-home .brand h1 { font-size: 18px; }
+    .knowledge-home header .chip { display: none; }
+    .knowledge-home #refreshBtn { flex-shrink: 0; white-space: nowrap; }
+    .knowledge-home #collectionList { max-height: 220px; overflow-y: auto; }
+    .knowledge-home .toolbar > div:first-child { flex-wrap: wrap; min-width: 0; }
+    .knowledge-home #globalSearch { flex-basis: 100%; }
+    .knowledge-home #searchMode { flex: 1; }
+    .knowledge-home #topK { width: 70px !important; }
+    .knowledge-home .upload-drop { padding: 14px; }
+    .knowledge-home .button, .knowledge-home .tab { min-height: 44px; }
+    .knowledge-home input, .knowledge-home select { font-size: 16px; }
+}

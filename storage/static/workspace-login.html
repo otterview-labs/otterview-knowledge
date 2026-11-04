@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>登录 · OtterView 知识库</title>
+  <link rel="stylesheet" href="/static/css/workspace-login.css">
+  <script src="/static/js/workspace-login.js" defer></script>
+</head>
+<body>
+  <header><a href="/login">OtterView <strong>知识库</strong></a></header>
+  <main>
+    <h1>登录知识库</h1>
+    <p>登录后可搜索、阅读和上传文档。</p>
+    <form method="post" action="/login">
+      <p id="login-error" class="login-error" role="alert" hidden></p>
+      <label for="username">账号</label>
+      <input id="username" name="username" autocomplete="username" required maxlength="100">
+      <label for="password">密码</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required maxlength="512">
+      <button type="submit">登录</button>
+    </form>
+  </main>
+</body>
+</html>

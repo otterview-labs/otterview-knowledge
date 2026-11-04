@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JetLinks知识库 - 综合测试平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #000000;
+            min-height: 100vh;
+            padding: 20px;
+            color: #ffffff;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.8;
+            color: #aaa;
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: #111111;
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.05);
+        }
+        
+        .card h2 {
+            color: #ffffff;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 1.5em;
+            font-weight: 300;
+        }
+        
+        .upload-area {
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        .upload-area:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .upload-area.dragging {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: #ffffff;
+            transform: scale(1.02);
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #ffffff;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .upload-text {
+            color: #ffffff;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        
+        .upload-subtext {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .progress-container {
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 25px;
+            background: #222;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #333, #555);
+            width: 0%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status-log {
+            margin-top: 15px;
+            padding: 15px;
+            background: #0a0a0a;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        
+        .status-entry {
+            margin-bottom: 8px;
+            padding: 5px;
+            border-radius: 4px;
+            color: #ffffff;
+        }
+        
+        .status-entry.success {
+            background: rgba(40, 167, 69, 0.2);
+            border-left: 3px solid #28a745;
+        }
+        
+        .status-entry.info {
+            background: rgba(23, 162, 184, 0.2);
+            border-left: 3px solid #17a2b8;
+        }
+        
+        .status-entry.warning {
+            background: rgba(255, 193, 7, 0.2);
+            border-left: 3px solid #ffc107;
+        }
+        
+        .status-entry.error {
+            background: rgba(220, 53, 69, 0.2);
+            border-left: 3px solid #dc3545;
+        }
+        
+        .search-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .input-group label {
+            color: #aaa;
+            font-weight: 400;
+            font-size: 14px;
+        }
+        
+        .input-group input,
+        .input-group select,
+        .input-group textarea {
+            padding: 10px 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: #0a0a0a;
+            color: #ffffff;
+        }
+        
+        .input-group input:focus,
+        .input-group select:focus,
+        .input-group textarea:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.3);
+            background: #111;
+        }
+        
+        .input-group textarea {
+            resize: vertical;
+            min-height: 80px;
+            font-family: inherit;
+        }
+        
+        .input-group select option {
+            background: #000;
+            color: #fff;
+        }
+        
+        .advanced-options {
+            margin-top: 15px;
+            padding: 15px;
+            background: #0a0a0a;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .advanced-options h3 {
+            color: #ffffff;
+            font-size: 16px;
+            margin-bottom: 15px;
+            font-weight: 400;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #ffffff;
+        }
+        
+        .checkbox-group label {
+            cursor: pointer;
+            color: #aaa;
+            font-size: 14px;
+        }
+        
+        .row-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .btn {
+            padding: 12px 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: transparent;
+            color: #ffffff;
+        }
+        
+        .btn-primary {
+            background: #ffffff;
+            color: #000000;
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255, 255, 255, 0.2);
+            background: #f0f0f0;
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .results-container {
+            margin-top: 30px;
+            display: none;
+        }
+        
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #111;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .results-count {
+            font-size: 18px;
+            font-weight: 400;
+            color: #ffffff;
+        }
+        
+        .results-time {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .result-item {
+            background: #111;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .result-item:hover {
+            transform: translateX(5px);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .result-title {
+            font-size: 18px;
+            font-weight: 400;
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+        
+        .result-content {
+            color: #aaa;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        
+        .result-meta {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #666;
+            font-size: 13px;
+        }
+        
+        .meta-item i {
+            color: #ffffff;
+        }
+        
+        .score-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #ffffff;
+            color: #000000;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .spinner {
+            border: 4px solid #222;
+            border-top: 4px solid #ffffff;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            display: none;
+            padding: 15px;
+            background: rgba(220, 53, 69, 0.1);
+            color: #ff6b6b;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px solid rgba(220, 53, 69, 0.3);
+        }
+        
+        .success-message {
+            display: none;
+            padding: 15px;
+            background: rgba(40, 167, 69, 0.1);
+            color: #51cf66;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px solid rgba(40, 167, 69, 0.3);
+        }
+        
+        .kg-relations {
+            margin-top: 15px;
+            padding: 15px;
+            background: #0a0a0a;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .kg-relations h4 {
+            color: #ffffff;
+            margin-bottom: 10px;
+            font-size: 14px;
+            font-weight: 400;
+        }
+        
+        .relation-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            background: #111;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .relation-type {
+            padding: 2px 8px;
+            background: #ffffff;
+            color: #000000;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .weights-config {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .weight-input {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .weight-input label {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .weight-input input {
+            padding: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            font-size: 12px;
+            background: #0a0a0a;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 JetLinks知识库综合测试平台</h1>
+            <p>集成文件上传、处理监控、多模式搜索的一站式测试工具</p>
+        </div>
+        
+        <div class="main-grid">
+            <!-- 上传和进度监控 -->
+            <div class="card">
+                <h2>📤 文件上传与处理监控</h2>
+                
+                <!-- 集合选择 -->
+                <div class="input-group" style="margin-bottom: 20px;">
+                    <label for="uploadCollectionSelect">选择集合</label>
+                    <div style="display: flex; gap: 10px;">
+                        <select id="uploadCollectionSelect" style="flex: 1;">
+                            <option value="">新建集合（自动生成ID）</option>
+                        </select>
+                        <button type="button" class="btn" onclick="showCreateCollectionDialog()" style="padding: 10px 20px;">
+                            + 新建
+                        </button>
+                        <button type="button" class="btn" onclick="loadCollections()" style="padding: 10px 20px;">
+                            🔄 刷新
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 上传区域 -->
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">拖拽文件到此处或点击选择</div>
+                    <div class="upload-subtext">支持 PDF、Word、图片、视频等多种格式</div>
+                    <input type="file" id="fileInput" class="file-input" multiple>
+                </div>
+                
+                <!-- 进度条 -->
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill">0%</div>
+                    </div>
+                </div>
+                
+                <!-- 状态日志 -->
+                <div class="status-log" id="statusLog" style="display: none;">
+                    <!-- 状态条目将动态添加 -->
+                </div>
+                
+                <!-- 成功消息 -->
+                <div class="success-message" id="uploadSuccess">
+                    ✅ 文件上传成功！
+                </div>
+                
+                <!-- 错误消息 -->
+                <div class="error-message" id="uploadError">
+                    ❌ 上传失败，请重试
+                </div>
+            </div>
+            
+            <!-- 搜索配置 -->
+            <div class="card">
+                <h2>🔍 内容搜索测试</h2>
+                
+                <form class="search-form" id="searchForm">
+                    <!-- 查询输入 -->
+                    <div class="input-group">
+                        <label for="queryInput">搜索查询</label>
+                        <textarea id="queryInput" placeholder="输入您的搜索内容...">JetLinks物联网平台</textarea>
+                    </div>
+                    
+                    <!-- 搜索模式选择 -->
+                    <div class="input-group">
+                        <label for="searchMode">搜索模式</label>
+                        <select id="searchMode">
+                            <option value="intelligent">智能搜索 (Intelligent)</option>
+                            <option value="semantic">语义搜索 (Semantic)</option>
+                            <option value="keyword">关键词搜索 (Keyword)</option>
+                            <option value="kg">知识图谱搜索 (KG)</option>
+                            <option value="hybrid">混合搜索 (Hybrid)</option>
+                            <option value="file">文件级搜索 (File-level)</option>
+                            <option value="three_layer_keyword">三层关键词搜索 (快速)</option>
+                            <option value="three_layer_semantic" selected>三层语义搜索 (平衡)</option>
+                            <option value="three_layer_document">三层文档搜索 (全面)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- 基础参数 -->
+                    <div class="row-inputs">
+                        <div class="input-group">
+                            <label for="topK">返回结果数 (Top K)</label>
+                            <input type="number" id="topK" value="5" min="1" max="100">
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="searchCollectionSelect">选择集合</label>
+                            <div style="display: flex; gap: 10px;">
+                                <select id="searchCollectionSelect" style="flex: 1;">
+                                    <option value="">所有集合</option>
+                                </select>
+                                <button type="button" class="btn" onclick="loadCollections()" style="padding: 8px 15px; font-size: 14px;">
+                                    🔄
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 高级选项 -->
+                    <div class="advanced-options">
+                        <h3>⚙️ 高级选项</h3>
+                        
+                        <!-- 知识图谱选项 -->
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="includeRelations">
+                            <label for="includeRelations">包含知识图谱关系</label>
+                        </div>
+                        
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="enableGraphExpansion">
+                            <label for="enableGraphExpansion">启用图扩展搜索</label>
+                        </div>
+                        
+                        <div class="row-inputs">
+                            <div class="input-group">
+                                <label for="maxGraphHops">知识图谱跳数</label>
+                                <input type="number" id="maxGraphHops" value="2" min="1" max="5">
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="expandContext">上下文扩展</label>
+                                <select id="expandContext">
+                                    <option value="false">不扩展</option>
+                                    <option value="true">扩展上下文</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- 三层搜索权重配置 -->
+                        <div class="weights-config" id="weightsConfig" style="display: none;">
+                            <div class="weight-input">
+                                <label>词汇层权重</label>
+                                <input type="number" id="termWeight" value="0.3" min="0" max="1" step="0.1">
+                            </div>
+                            <div class="weight-input">
+                                <label>分块层权重</label>
+                                <input type="number" id="chunkWeight" value="0.5" min="0" max="1" step="0.1">
+                            </div>
+                            <div class="weight-input">
+                                <label>文档层权重</label>
+                                <input type="number" id="documentWeight" value="0.2" min="0" max="1" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 搜索按钮 -->
+                    <button type="submit" class="btn btn-primary" id="searchBtn">
+                        执行搜索
+                    </button>
+                </form>
+                
+                <!-- 加载动画 -->
+                <div class="loading-spinner" id="loadingSpinner">
+                    <div class="spinner"></div>
+                    <p style="margin-top: 15px; color: #666;">搜索中...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 搜索结果 -->
+        <div class="results-container" id="resultsContainer">
+            <div class="results-header">
+                <div class="results-count" id="resultsCount">找到 0 个结果</div>
+                <div class="results-time" id="resultsTime">耗时: 0ms</div>
+            </div>
+            
+            <div id="resultsList">
+                <!-- 结果将动态添加 -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 全局变量
+        let uploadedFiles = [];
+        let currentProcessId = null;
+        
+        // DOM元素
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const statusLog = document.getElementById('statusLog');
+        const uploadSuccess = document.getElementById('uploadSuccess');
+        const uploadError = document.getElementById('uploadError');
+        const searchForm = document.getElementById('searchForm');
+        const searchBtn = document.getElementById('searchBtn');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const resultsList = document.getElementById('resultsList');
+        const resultsCount = document.getElementById('resultsCount');
+        const resultsTime = document.getElementById('resultsTime');
+        const searchMode = document.getElementById('searchMode');
+        const weightsConfig = document.getElementById('weightsConfig');
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            setupUploadHandlers();
+            setupSearchHandlers();
+            setupModeHandlers();
+            loadCollections(); // 加载集合列表
+        });
+        
+        // 设置上传处理器
+        function setupUploadHandlers() {
+            // 点击上传
+            uploadArea.addEventListener('click', () => {
+                fileInput.click();
+            });
+            
+            // 文件选择
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    uploadFile(e.target.files[0]);
+                }
+            });
+            
+            // 拖拽上传
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragging');
+            });
+            
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragging');
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragging');
+                
+                if (e.dataTransfer.files.length > 0) {
+                    uploadFile(e.dataTransfer.files[0]);
+                }
+            });
+        }
+        
+        // 设置搜索处理器
+        function setupSearchHandlers() {
+            searchForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await performSearch();
+            });
+        }
+        
+        // 设置模式处理器
+        function setupModeHandlers() {
+            searchMode.addEventListener('change', (e) => {
+                const mode = e.target.value;
+                // 显示/隐藏权重配置
+                if (mode.startsWith('three_layer_')) {
+                    weightsConfig.style.display = 'grid';
+                } else {
+                    weightsConfig.style.display = 'none';
+                }
+            });
+        }
+        
+        // 上传文件 - 支持两种模式：直接上传和资源解析
+        async function uploadFile(file) {
+            // 重置状态
+            uploadSuccess.style.display = 'none';
+            uploadError.style.display = 'none';
+            progressContainer.style.display = 'block';
+            statusLog.style.display = 'block';
+            statusLog.innerHTML = '';
+            
+            // 添加开始状态
+            addStatusEntry('info', `开始处理: ${file.name}`);
+            
+            // 第一步：先上传文件获取URL
+            try {
+                updateProgress(10, '上传文件中...');
+                
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('title', file.name);
+                
+                const uploadResponse = await fetch('/api/v1/rag/multimodal/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!uploadResponse.ok) {
+                    throw new Error(`上传失败: ${uploadResponse.status}`);
+                }
+                
+                const uploadData = await uploadResponse.json();
+                addStatusEntry('success', '文件上传成功');
+                
+                // 获取文件URL - 需要转换为完整URL
+                let fileUrl = uploadData.result?.file_url || uploadData.result?.url;
+                
+                if (fileUrl) {
+                    // 如果是相对路径，转换为完整URL
+                    if (fileUrl.startsWith('/')) {
+                        fileUrl = window.location.origin + fileUrl;
+                    }
+                    addStatusEntry('info', `文件URL: ${fileUrl}`);
+                    
+                    // 使用资源解析API进行批量处理
+                    await processWithResourceParse(file, fileUrl, uploadData);
+                } else {
+                    // 降级到直接处理模式
+                    if (uploadData.result && uploadData.result.process_id) {
+                        currentProcessId = uploadData.result.process_id;
+                        addStatusEntry('info', `处理ID: ${currentProcessId}`);
+                        await monitorProcessingStatus(currentProcessId);
+                    }
+                }
+                
+                uploadSuccess.style.display = 'block';
+                updateProgress(100, '完成');
+                
+            } catch (error) {
+                console.error('处理错误:', error);
+                addStatusEntry('error', `处理失败: ${error.message}`);
+                uploadError.style.display = 'block';
+                updateProgress(0, '失败');
+            }
+        }
+        
+        // 使用资源解析API处理文件
+        async function processWithResourceParse(file, fileUrl, uploadData) {
+            try {
+                updateProgress(30, '准备资源解析...');
+                addStatusEntry('info', '使用资源解析API处理文件');
+                
+                // 生成资源ID和获取选中的集合ID
+                const resourceId = `res_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                const uploadSelect = document.getElementById('uploadCollectionSelect');
+                const collectionId = uploadSelect?.value || `col_${Date.now().toString(36)}`;
+                
+                // 从上传响应中获取实际的MD5值
+                const actualMd5 = uploadData.result?.md5;
+                
+                // 构建批量解析请求
+                const batchRequest = {
+                    resources: [{
+                        id: resourceId,
+                        classifyId: collectionId,
+                        name: file.name,
+                        description: `上传的文件: ${file.name}`,
+                        type: 'file',
+                        content: {
+                            url: fileUrl,
+                            length: file.size,
+                            md5: actualMd5 || ''  // 使用服务器返回的MD5值
+                        },
+                        tags: [file.type, 'uploaded'],
+                        bindings: []
+                    }]
+                };
+                
+                updateProgress(40, '发送解析请求...');
+                
+                // 发送批量解析请求
+                const parseResponse = await fetch('/api/v1/rag/resource-parse/batch-parse', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(batchRequest)
+                });
+                
+                if (!parseResponse.ok) {
+                    throw new Error(`资源解析失败: ${parseResponse.status}`);
+                }
+                
+                const parseData = await parseResponse.json();
+                const batchId = parseData.result?.batch_id;
+                
+                if (batchId) {
+                    addStatusEntry('success', `批量任务创建成功: ${batchId}`);
+                    addStatusEntry('info', `集合ID: ${collectionId}`);
+                    
+                    // 监控批量任务状态
+                    await monitorBatchStatus(batchId);
+                } else {
+                    addStatusEntry('warning', '未获取到批量任务ID，使用备用处理方式');
+                }
+                
+            } catch (error) {
+                console.error('资源解析错误:', error);
+                addStatusEntry('error', `资源解析失败: ${error.message}`);
+                throw error;
+            }
+        }
+        
+        // 监控批量任务状态
+        async function monitorBatchStatus(batchId) {
+            let attempts = 0;
+            const maxAttempts = 30;
+            
+            updateProgress(50, '监控批量任务状态...');
+            
+            while (attempts < maxAttempts) {
+                try {
+                    const response = await fetch('/api/v1/rag/resource-parse/batch-status', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ batch_id: batchId })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        const status = data.result;
+                        
+                        if (status) {
+                            // 计算实际完成数（完成 + 失败）
+                            const actualCompleted = (status.completed || 0) + (status.failed || 0);
+                            const progress = Math.round((actualCompleted / status.total) * 100);
+                            updateProgress(50 + progress / 2, `处理中: ${actualCompleted}/${status.total}`);
+                            
+                            addStatusEntry('info', 
+                                `进度: ${actualCompleted}/${status.total} | ` +
+                                `成功: ${status.completed || 0} | 失败: ${status.failed || 0}`
+                            );
+                            
+                            // 显示资源状态
+                            if (status.resources && status.resources.length > 0) {
+                                status.resources.forEach(resource => {
+                                    const statusType = resource.status === 'completed' ? 'success' : 
+                                                     resource.status === 'failed' ? 'error' : 
+                                                     resource.status === 'processing' ? 'warning' : 'info';
+                                    addStatusEntry(statusType, 
+                                        `资源 ${resource.id}: ${resource.status} ${resource.message || ''}`
+                                    );
+                                });
+                            }
+                            
+                            // 检查是否完成
+                            if (actualCompleted >= status.total) {
+                                if (status.failed > 0) {
+                                    addStatusEntry('warning', `批量处理完成，但有 ${status.failed} 个失败项`);
+                                } else {
+                                    addStatusEntry('success', '批量处理全部成功！');
+                                }
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // 等待2秒后重试
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    attempts++;
+                    
+                } catch (error) {
+                    console.error('状态检查错误:', error);
+                    addStatusEntry('warning', '状态检查失败，继续尝试...');
+                    attempts++;
+                }
+            }
+        }
+        
+        // 监控处理状态（备用方法）
+        async function monitorProcessingStatus(processId) {
+            let attempts = 0;
+            const maxAttempts = 30;
+            
+            while (attempts < maxAttempts) {
+                try {
+                    const response = await fetch(`/api/v1/rag/multimodal/processing-status/${processId}`);
+                    const data = await response.json();
+                    
+                    if (data.result) {
+                        const status = data.result.status;
+                        const progress = data.result.progress || 0;
+                        
+                        // 更新进度
+                        updateProgress(50 + progress / 2, `处理中: ${status}`);
+                        addStatusEntry('info', `状态: ${status} (${progress}%)`);
+                        
+                        // 检查是否完成
+                        if (status === 'completed') {
+                            addStatusEntry('success', '文档处理完成！');
+                            break;
+                        } else if (status === 'failed') {
+                            addStatusEntry('error', '文档处理失败');
+                            break;
+                        }
+                    }
+                    
+                    // 等待2秒后重试
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    attempts++;
+                    
+                } catch (error) {
+                    console.error('状态检查错误:', error);
+                    addStatusEntry('warning', '状态检查失败，继续尝试...');
+                    attempts++;
+                }
+            }
+        }
+        
+        // 计算文件MD5（简化版）
+        async function calculateFileMD5(file) {
+            // 这是一个简化的MD5计算，实际应用中应使用完整的MD5库
+            const arrayBuffer = await file.arrayBuffer();
+            const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hashHex.substring(0, 32); // 取前32位作为伪MD5
+        }
+        
+        // 执行搜索
+        async function performSearch() {
+            // 获取表单数据
+            const query = document.getElementById('queryInput').value;
+            const mode = document.getElementById('searchMode').value;
+            const topK = parseInt(document.getElementById('topK').value);
+            const collectionId = document.getElementById('searchCollectionSelect').value;
+            const includeRelations = document.getElementById('includeRelations').checked;
+            const enableGraphExpansion = document.getElementById('enableGraphExpansion').checked;
+            const maxGraphHops = parseInt(document.getElementById('maxGraphHops').value);
+            const expandContext = document.getElementById('expandContext').value === 'true';
+            
+            // 构建请求体
+            const requestBody = {
+                query: query,
+                search_mode: mode,
+                top_k: topK,
+                enable_graph_expansion: enableGraphExpansion,
+                max_graph_hops: maxGraphHops
+            };
+            
+            // 添加集合ID（如果有）
+            if (collectionId) {
+                // ✅ 对齐后端：collection_id 是 List[str]
+                requestBody.collection_id = [collectionId];
+            }
+
+            // ✅ 对齐后端：知识图谱参数放在 kg_config 中
+            if (mode === 'kg') {
+                requestBody.kg_config = {
+                    search_type: 'entity',
+                    max_depth: Math.max(1, Math.min(maxGraphHops || 2, 5)),
+                    include_relations: includeRelations
+                };
+            }
+            
+            // 说明：后端统一检索接口未暴露 weights 参数，这里不再透传，避免触发 422 校验错误
+            
+            // 显示加载动画
+            loadingSpinner.style.display = 'block';
+            resultsContainer.style.display = 'none';
+            searchBtn.disabled = true;
+            
+            const startTime = Date.now();
+            
+            try {
+                // 发送搜索请求
+                const response = await fetch('/api/v1/rag/search/unified', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                const endTime = Date.now();
+                
+                // 显示结果 - 直接传递data，因为results在顶层
+                displayResults(data, endTime - startTime);
+                
+            } catch (error) {
+                console.error('搜索错误:', error);
+                alert(`搜索失败: ${error.message}`);
+            } finally {
+                loadingSpinner.style.display = 'none';
+                searchBtn.disabled = false;
+            }
+        }
+        
+        // 显示搜索结果
+        function displayResults(results, timeMs) {
+            resultsContainer.style.display = 'block';
+            
+            // 处理不同的响应格式
+            // 新格式: { results: [...], total: n }
+            // 旧格式: { items: [...] }
+            const items = results?.results || results?.items || [];
+            const total = results?.total || items.length;
+            
+            resultsCount.textContent = `找到 ${total} 个结果`;
+            resultsTime.textContent = `耗时: ${timeMs}ms`;
+            
+            // 清空并添加结果
+            resultsList.innerHTML = '';
+            
+            if (items.length === 0) {
+                resultsList.innerHTML = '<div class="result-item"><p style="color: #666;">没有找到相关结果</p></div>';
+                return;
+            }
+            
+            items.forEach((item, index) => {
+                const resultItem = createResultItem(item, index + 1);
+                resultsList.appendChild(resultItem);
+            });
+        }
+        
+        // 创建结果项
+        function createResultItem(item, index) {
+            const div = document.createElement('div');
+            div.className = 'result-item';
+            
+            // 标题 - 从metadata中获取title，如果没有则用文件名或ID
+            const title = document.createElement('div');
+            title.className = 'result-title';
+            const titleText = item.metadata?.title || item.title || item.file_name || item.id || '未命名文档';
+            title.textContent = `${index}. ${titleText}`;
+            div.appendChild(title);
+            
+            // 内容
+            const content = document.createElement('div');
+            content.className = 'result-content';
+            content.textContent = item.content || item.text || '无内容预览';
+            div.appendChild(content);
+            
+            // 元数据
+            const meta = document.createElement('div');
+            meta.className = 'result-meta';
+            
+            // 分数 - 优先显示similarity_score，其次是score
+            const scoreValue = item.similarity_score || item.score;
+            if (scoreValue !== undefined) {
+                const scoreItem = document.createElement('div');
+                scoreItem.className = 'meta-item';
+                scoreItem.innerHTML = `<span class="score-badge">${scoreValue.toFixed(4)}</span>`;
+                meta.appendChild(scoreItem);
+            }
+            
+            // 文件类型
+            if (item.file_type) {
+                const typeItem = document.createElement('div');
+                typeItem.className = 'meta-item';
+                typeItem.innerHTML = `<i>📄</i> ${item.file_type}`;
+                meta.appendChild(typeItem);
+            }
+            
+            // 集合
+            if (item.collection_name) {
+                const collectionItem = document.createElement('div');
+                collectionItem.className = 'meta-item';
+                collectionItem.innerHTML = `<i>📁</i> ${item.collection_name}`;
+                meta.appendChild(collectionItem);
+            }
+            
+            div.appendChild(meta);
+            
+            // 知识图谱关系
+            if (item.kg_relations && item.kg_relations.length > 0) {
+                const kgDiv = document.createElement('div');
+                kgDiv.className = 'kg-relations';
+                kgDiv.innerHTML = '<h4>知识图谱关系</h4>';
+                
+                item.kg_relations.forEach(rel => {
+                    const relItem = document.createElement('div');
+                    relItem.className = 'relation-item';
+                    relItem.innerHTML = `
+                        <span class="relation-type">${rel.relation_type}</span>
+                        <span>${rel.source_entity} → ${rel.target_entity}</span>
+                    `;
+                    kgDiv.appendChild(relItem);
+                });
+                
+                div.appendChild(kgDiv);
+            }
+            
+            return div;
+        }
+        
+        // 更新进度
+        function updateProgress(percent, text) {
+            progressFill.style.width = `${percent}%`;
+            progressFill.textContent = text || `${percent}%`;
+        }
+        
+        // 添加状态条目
+        function addStatusEntry(type, message) {
+            const entry = document.createElement('div');
+            entry.className = `status-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            statusLog.appendChild(entry);
+            statusLog.scrollTop = statusLog.scrollHeight;
+        }
+        
+        // ========== 集合管理功能 ==========
+        
+        // 加载集合列表
+        async function loadCollections() {
+            try {
+                // 使用POST方法和标准分页格式
+                const response = await fetch('/api/v1/rag/collections/list', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        pageIndex: 0,
+                        pageSize: 100,  // 获取前100个集合
+                        sorts: [{
+                            name: 'createTime',
+                            order: 'desc'
+                        }],
+                        terms: []
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`加载集合失败: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                // 标准分页响应格式，数据在 result.data 中
+                const collections = data.result?.data || [];
+                
+                // 更新上传集合选择器
+                const uploadSelect = document.getElementById('uploadCollectionSelect');
+                if (uploadSelect) {
+                    uploadSelect.innerHTML = '<option value="">新建集合（自动生成ID）</option>';
+                    collections.forEach(collection => {
+                        const option = document.createElement('option');
+                        option.value = collection.id;
+                        option.textContent = `${collection.name} (${collection.doc_count || 0} 个文档)`;
+                        uploadSelect.appendChild(option);
+                    });
+                }
+                
+                // 更新搜索集合选择器
+                const searchSelect = document.getElementById('searchCollectionSelect');
+                if (searchSelect) {
+                    searchSelect.innerHTML = '<option value="">所有集合</option>';
+                    collections.forEach(collection => {
+                        const option = document.createElement('option');
+                        option.value = collection.id;
+                        option.textContent = `${collection.name} (${collection.doc_count || 0} 个文档)`;
+                        searchSelect.appendChild(option);
+                    });
+                }
+                
+                console.log(`成功加载 ${collections.length} 个集合`);
+            } catch (error) {
+                console.error('加载集合失败:', error);
+            }
+        }
+        
+        // 显示创建集合对话框
+        function showCreateCollectionDialog() {
+            // 创建对话框HTML
+            const dialogHtml = `
+                <div id="collectionDialog" style="
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.8);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 1000;
+                ">
+                    <div style="
+                        background: #111;
+                        border: 1px solid rgba(255, 255, 255, 0.2);
+                        border-radius: 15px;
+                        padding: 30px;
+                        width: 90%;
+                        max-width: 500px;
+                        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+                    ">
+                        <h3 style="color: #fff; margin-bottom: 20px;">创建新集合</h3>
+                        
+                        <div class="input-group" style="margin-bottom: 15px;">
+                            <label for="newCollectionId" style="color: #aaa;">集合ID (可选)</label>
+                            <input type="text" id="newCollectionId" placeholder="留空自动生成" style="
+                                width: 100%;
+                                padding: 10px;
+                                background: #000;
+                                border: 1px solid rgba(255, 255, 255, 0.2);
+                                border-radius: 8px;
+                                color: #fff;
+                            ">
+                        </div>
+                        
+                        <div class="input-group" style="margin-bottom: 15px;">
+                            <label for="newCollectionName" style="color: #aaa;">集合名称 *</label>
+                            <input type="text" id="newCollectionName" placeholder="输入集合名称" required style="
+                                width: 100%;
+                                padding: 10px;
+                                background: #000;
+                                border: 1px solid rgba(255, 255, 255, 0.2);
+                                border-radius: 8px;
+                                color: #fff;
+                            ">
+                        </div>
+                        
+                        <div class="input-group" style="margin-bottom: 15px;">
+                            <label for="newCollectionDesc" style="color: #aaa;">描述</label>
+                            <textarea id="newCollectionDesc" placeholder="输入集合描述" style="
+                                width: 100%;
+                                padding: 10px;
+                                background: #000;
+                                border: 1px solid rgba(255, 255, 255, 0.2);
+                                border-radius: 8px;
+                                color: #fff;
+                                min-height: 80px;
+                                resize: vertical;
+                            "></textarea>
+                        </div>
+                        
+                        <div class="input-group" style="margin-bottom: 20px;">
+                            <label for="newCollectionVectorDb" style="color: #aaa;">向量数据库</label>
+                            <select id="newCollectionVectorDb" style="
+                                width: 100%;
+                                padding: 10px;
+                                background: #000;
+                                border: 1px solid rgba(255, 255, 255, 0.2);
+                                border-radius: 8px;
+                                color: #fff;
+                            ">
+                                <option value="faiss">FAISS (默认)</option>
+                                <option value="milvus">Milvus</option>
+                            </select>
+                        </div>
+                        
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button onclick="closeCollectionDialog()" style="
+                                padding: 10px 20px;
+                                background: #333;
+                                color: #fff;
+                                border: 1px solid rgba(255, 255, 255, 0.2);
+                                border-radius: 8px;
+                                cursor: pointer;
+                            ">取消</button>
+                            <button onclick="createCollection()" style="
+                                padding: 10px 20px;
+                                background: #fff;
+                                color: #000;
+                                border: none;
+                                border-radius: 8px;
+                                cursor: pointer;
+                                font-weight: 600;
+                            ">创建</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 添加到页面
+            const dialogContainer = document.createElement('div');
+            dialogContainer.innerHTML = dialogHtml;
+            document.body.appendChild(dialogContainer.firstElementChild);
+        }
+        
+        // 关闭集合对话框
+        function closeCollectionDialog() {
+            const dialog = document.getElementById('collectionDialog');
+            if (dialog) {
+                dialog.remove();
+            }
+        }
+        
+        // 创建集合
+        async function createCollection() {
+            const collectionId = document.getElementById('newCollectionId').value.trim();
+            const name = document.getElementById('newCollectionName').value.trim();
+            const description = document.getElementById('newCollectionDesc').value.trim();
+            const vectorDb = document.getElementById('newCollectionVectorDb').value;
+            
+            if (!name) {
+                alert('请输入集合名称');
+                return;
+            }
+            
+            try {
+                const requestBody = {
+                    name: name,
+                    description: description || name,
+                    vector_db_type: vectorDb
+                };
+                
+                // 如果提供了ID，添加到请求体
+                if (collectionId) {
+                    requestBody.collection_id = collectionId;
+                }
+                
+                const response = await fetch('/api/v1/rag/collections/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || `创建失败: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                alert(`集合创建成功: ${data.result.name}`);
+                
+                // 关闭对话框
+                closeCollectionDialog();
+                
+                // 重新加载集合列表
+                await loadCollections();
+                
+                // 自动选择新创建的集合
+                const uploadSelect = document.getElementById('uploadCollectionSelect');
+                if (uploadSelect) {
+                    uploadSelect.value = data.result.id;
+                }
+                
+            } catch (error) {
+                console.error('创建集合失败:', error);
+                alert('创建集合失败: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

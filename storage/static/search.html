@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>知识库搜索 - JetLinks AI</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            padding: 40px 20px;
+        }
+
+        .header h1 {
+            font-size: 48px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        .search-box {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+        }
+
+        .search-input-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 16px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-btn {
+            padding: 16px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .search-btn:active {
+            transform: translateY(0);
+        }
+
+        .search-options {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .option-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .option-group label {
+            font-size: 14px;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .option-group select,
+        .option-group input {
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .results-container {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            display: none;
+        }
+
+        .results-container.show {
+            display: block;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .results-stats {
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .results-stats strong {
+            color: #667eea;
+            font-size: 18px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .loading i {
+            font-size: 48px;
+            color: #667eea;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading p {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #64748b;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-state i {
+            font-size: 64px;
+            color: #cbd5e0;
+            margin-bottom: 20px;
+        }
+
+        .empty-state h3 {
+            font-size: 24px;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            font-size: 16px;
+            color: #64748b;
+        }
+
+        .result-item {
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .result-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .result-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .result-title i {
+            color: #667eea;
+        }
+
+        .result-meta {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .result-meta span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .result-snippet {
+            font-size: 14px;
+            color: #475569;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .result-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-keyword {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-semantic {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-hybrid {
+            background: #e0e7ff;
+            color: #4338ca;
+        }
+
+        .badge-similarity {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .result-content {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: #475569;
+            line-height: 1.8;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            display: none;
+        }
+
+        .result-content.show {
+            display: block;
+        }
+
+        .suggestions {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .suggestions h4 {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 10px;
+        }
+
+        .suggestion-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .suggestion-tag {
+            padding: 6px 12px;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .suggestion-tag:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .collection-selector {
+            margin-bottom: 20px;
+        }
+
+        .collection-selector label {
+            display: block;
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .collection-selector input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-search"></i> 知识库搜索</h1>
+            <p>智能语义搜索 · 支持多种搜索模式</p>
+        </div>
+
+        <div class="search-box">
+            <div class="collection-selector">
+                <label for="collectionId">知识库ID (可选)</label>
+                <input type="text" id="collectionId" placeholder="留空搜索所有知识库，或输入特定知识库ID">
+            </div>
+
+            <div class="search-input-group">
+                <input type="text"
+                       id="searchInput"
+                       class="search-input"
+                       placeholder="输入搜索内容..."
+                       onkeypress="if(event.key==='Enter') performSearch()">
+                <button class="search-btn" onclick="performSearch()">
+                    <i class="fas fa-search"></i>
+                    搜索
+                </button>
+            </div>
+
+            <div class="search-options">
+                <div class="option-group">
+                    <label>搜索模式:</label>
+                    <select id="searchMode">
+                        <option value="intelligent">智能模式</option>
+                        <option value="semantic">语义搜索</option>
+                        <option value="keyword">关键词搜索</option>
+                        <option value="hybrid">混合搜索</option>
+                        <option value="kg">知识图谱</option>
+                    </select>
+                </div>
+                <div class="option-group">
+                    <label>返回结果数:</label>
+                    <select id="topK">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                    </select>
+                </div>
+                <div class="option-group">
+                    <label>相似度阈值:</label>
+                    <input type="number" id="threshold" value="0" min="0" max="1" step="0.1" style="width: 80px;">
+                </div>
+            </div>
+        </div>
+
+        <div class="results-container" id="resultsContainer">
+            <div id="resultsContent"></div>
+        </div>
+    </div>
+
+    <script>
+        async function performSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) {
+                alert('请输入搜索内容');
+                return;
+            }
+
+            const searchMode = document.getElementById('searchMode').value;
+            const topK = parseInt(document.getElementById('topK').value);
+            const threshold = parseFloat(document.getElementById('threshold').value);
+            const collectionIdInput = document.getElementById('collectionId').value.trim();
+            const collectionId = collectionIdInput ? [collectionIdInput] : [];
+
+            const resultsContainer = document.getElementById('resultsContainer');
+            const resultsContent = document.getElementById('resultsContent');
+
+            // 显示加载状态
+            resultsContainer.classList.add('show');
+            resultsContent.innerHTML = `
+                <div class="loading">
+                    <i class="fas fa-spinner"></i>
+                    <p>正在搜索中...</p>
+                </div>
+            `;
+
+            try {
+                const response = await fetch('/api/v1/rag/search/unified', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        search_mode: searchMode,
+                        top_k: topK,
+                        similarity_threshold: threshold,
+                        include_content: true,
+                        include_snippet: true,
+                        include_metadata: true,
+                        collection_id: collectionId
+                    })
+                });
+
+                const data = await response.json();
+                displayResults(data);
+
+            } catch (error) {
+                console.error('搜索失败:', error);
+                resultsContent.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>搜索失败</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function displayResults(data) {
+            const resultsContent = document.getElementById('resultsContent');
+
+            if (!data.results || data.results.length === 0) {
+                resultsContent.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-search-minus"></i>
+                        <h3>未找到相关内容</h3>
+                        <p>尝试使用不同的关键词或搜索模式</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const executionInfo = data.execution_info || {};
+            const searchMode = data.search_mode || 'unknown';
+
+            let html = `
+                <div class="results-header">
+                    <div class="results-stats">
+                        找到 <strong>${data.total || 0}</strong> 个相关文档 |
+                        搜索模式: <strong>${searchMode}</strong> |
+                        执行时间: <strong>${executionInfo.execution_time_ms || 'N/A'}ms</strong>
+                    </div>
+                </div>
+            `;
+
+            data.results.forEach((result, index) => {
+                const searchType = result.search_mode || result.search_type || 'unknown';
+                const similarity = result.similarity_score || result.hybrid_score || 0;
+
+                html += `
+                    <div class="result-item" onclick="toggleContent(${index})">
+                        <div class="result-title">
+                            <i class="fas fa-file-alt"></i>
+                            ${result.title || '未命名文档'}
+                        </div>
+                        <div class="result-meta">
+                            <span><i class="fas fa-tag"></i> ${result.content_type || '文档'}</span>
+                            ${result.metadata?.file_size ? `<span><i class="fas fa-file"></i> ${formatFileSize(result.metadata.file_size)}</span>` : ''}
+                            ${result.metadata?.upload_time ? `<span><i class="fas fa-clock"></i> ${formatDate(result.metadata.upload_time)}</span>` : ''}
+                            ${result.collection_id ? `<span><i class="fas fa-folder"></i> ${result.collection_id.substring(0, 16)}...</span>` : ''}
+                        </div>
+                        <div class="result-snippet">${result.snippet || result.description || '暂无内容预览'}</div>
+                        <div class="result-badges">
+                            <span class="badge badge-${searchType}">${searchType.toUpperCase()}</span>
+                            ${similarity > 0 ? `<span class="badge badge-similarity">相似度: ${(similarity * 100).toFixed(1)}%</span>` : ''}
+                        </div>
+                        <div class="result-content" id="content-${index}">
+                            ${result.content || '无内容'}
+                        </div>
+                    </div>
+                `;
+            });
+
+            // 添加搜索建议
+            if (data.suggestions && data.suggestions.length > 0) {
+                html += `
+                    <div class="suggestions">
+                        <h4>相关搜索建议:</h4>
+                        <div class="suggestion-tags">
+                            ${data.suggestions.map(s => `
+                                <span class="suggestion-tag" onclick="searchSuggestion('${s}')">${s}</span>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            resultsContent.innerHTML = html;
+        }
+
+        function toggleContent(index) {
+            const content = document.getElementById(`content-${index}`);
+            content.classList.toggle('show');
+        }
+
+        function searchSuggestion(query) {
+            document.getElementById('searchInput').value = query;
+            performSearch();
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN', {hour: '2-digit', minute: '2-digit'});
+        }
+
+        // 页面加载时自动聚焦搜索框
+        window.onload = function() {
+            document.getElementById('searchInput').focus();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+.env
+.git
+.git/
+__pycache__/
+*.pyc
+.DS_Store
+._*
+**/._*
+.__*
+**/.__*
+__MACOSX/
+**/__MACOSX/
+
+# runtime/generated data (keep host-mounted volumes)
+logs/
+storage/uploads/
+storage/temp/
+storage/logs/
+storage/data/
+storage/indices/
+storage/workspace/
+storage/static/uploads/
+storage/static/images/
+
+.venv/
+venv/
+env/
+.env.*
+!.env.example
+examples/
+docs/archive/
+private-backups/
+public-snapshot*/
+tests/
+
+# Local OtterView account and session database
+.workspace-auth/

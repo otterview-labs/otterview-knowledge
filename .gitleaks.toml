@@ -1,0 +1,11 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Clearly marked documentation placeholders and deterministic test fixtures"
+regexTarget = "secret"
+regexes = ['''(?i)^(test[-_]|your[-_]|example[-_]|dummy[-_]|placeholder|redacted|change-me|dev-secret)''']
+
+[[allowlists]]
+description = "Generated source manifest contains SHA256 checksums, not credentials"
+paths = ['''(^|/)SOURCE_MANIFEST\.json$''']

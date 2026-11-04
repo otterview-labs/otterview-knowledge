@@ -1,0 +1,54 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: ${DB_MYSQL_DATABASE:-otterview_knowledge}
+      POSTGRES_USER: ${DB_MYSQL_USER:-otterview}
+      POSTGRES_PASSWORD: ${DB_MYSQL_PASSWORD:?Set DB_MYSQL_PASSWORD in .env}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  knowledge:
+    build:
+      context: .
+      args:
+        INSTALL_PROFILE: ${INSTALL_PROFILE:-native}
+    env_file: .env
+    environment:
+      DB_DATABASE_TYPE: postgresql
+      DB_MYSQL_HOST: postgres
+      DB_MYSQL_PORT: "5432"
+      DB_MYSQL_DATABASE: ${DB_MYSQL_DATABASE:-otterview_knowledge}
+      DB_MYSQL_USER: ${DB_MYSQL_USER:-otterview}
+      STARTUP_INITIALIZE_DATABASE_ON_STARTUP: ${STARTUP_INITIALIZE_DATABASE_ON_STARTUP:-true}
+      SECURITY_SECRET_KEY: ${SECURITY_SECRET_KEY:?Set SECURITY_SECRET_KEY in .env}
+      KNOWLEDGE_WORKSPACE_AUTH_FILE: /workspace-auth/account.json
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:18006:8006"
+    volumes:
+      - ./.workspace-auth:/workspace-auth
+      - data:/app/storage/data
+      - uploads:/app/storage/uploads
+      - public_uploads:/app/storage/static/uploads
+      - images:/app/storage/static/images
+      - indices:/app/storage/indices
+      - work:/app/storage/workspace
+    restart: unless-stopped
+
+volumes:
+  postgres:
+  data:
+  uploads:
+  public_uploads:
+  images:
+  indices:
+  work:

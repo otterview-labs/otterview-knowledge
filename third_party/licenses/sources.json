@@ -1,0 +1,23 @@
+[
+  {
+    "name": "jieba",
+    "version": "0.42.1",
+    "source": "https://raw.githubusercontent.com/fxsjy/jieba/1e20c89b66f56c9301b0feed211733ffaa1bd72a/LICENSE",
+    "file": "jieba-0.42.1-LICENSE.txt",
+    "sha256": "18ba0984839f85853b29fadaf992f7dba8fd0ca0fbeae34de2b8735222dc7a37"
+  },
+  {
+    "name": "loguru",
+    "version": "0.7.3",
+    "source": "https://raw.githubusercontent.com/Delgan/loguru/ae3bfd1b85b6b4a3db535f69b975687c79498be4/LICENSE",
+    "file": "loguru-0.7.3-LICENSE.txt",
+    "sha256": "b35d026cc7aca9d5859a02eb87ddf7a386a24c986838651bd1f283f94e003327"
+  },
+  {
+    "name": "packageurl-python",
+    "version": "0.17.6",
+    "source": "https://raw.githubusercontent.com/package-url/packageurl-python/04b755ccc388d6a53bb5277d1f95de4baa727deb/mit.LICENSE",
+    "file": "packageurl-python-0.17.6-LICENSE.txt",
+    "sha256": "8e442c79545ac0c0a1a2cf0cf213312a45826acd6cdc6af223447dd5f708ee5d"
+  }
+]

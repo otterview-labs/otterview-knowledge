@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多场景文档解析系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.8em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.3em;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+            gap: 10px;
+        }
+
+        .tab {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            min-width: 140px;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .tab:hover {
+            transform: translateY(-2px);
+        }
+
+        .content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .agent-showcase {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .agent-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+
+        .agent-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .agent-card h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .agent-card p {
+            margin-bottom: 15px;
+            opacity: 0.9;
+        }
+
+        .capabilities {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .capability-tag {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+        }
+
+        .upload-area {
+            border: 2px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: #764ba2;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .result-item {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .result-title {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .status-badge {
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+            font-size: 18px;
+            margin: 30px 0;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .loading .spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .info-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+            border-top: 4px solid #667eea;
+        }
+
+        .info-card h4 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .field-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .field-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .field-label {
+            font-weight: 600;
+            color: #666;
+        }
+
+        .field-value {
+            color: #333;
+            text-align: right;
+        }
+
+        .file-info {
+            display: none;
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .file-info.show {
+            display: block;
+        }
+
+        .analysis-section {
+            margin: 20px 0;
+        }
+
+        .analysis-section h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .tabs {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .tab {
+                width: 90%;
+                margin: 5px 0;
+            }
+            
+            .agent-showcase {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 多场景文档解析系统</h1>
+            <p>基于多模态AI的智能文档处理平台，支持发票、合同、身份证、表格等多种文档类型</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('overview')">🏠 系统概览</button>
+            <button class="tab" onclick="showTab('parse')">📄 智能解析</button>
+            <button class="tab" onclick="showTab('batch')">📁 批量处理</button>
+            <button class="tab" onclick="showTab('analysis')">🔍 结构分析</button>
+            <button class="tab" onclick="showTab('stats')">📊 系统统计</button>
+        </div>
+
+        <!-- 系统概览 -->
+        <div id="overview-tab" class="content tab-content active">
+            <h2>🌟 智能体展示</h2>
+            <div class="agent-showcase" id="agent-showcase">
+                <div class="agent-card" onclick="selectAgent('invoice')">
+                    <h3>📋 发票解析智能体</h3>
+                    <p>专业的发票智能解析，支持多种发票类型和格式</p>
+                    <div class="capabilities">
+                        <span class="capability-tag">OCR识别</span>
+                        <span class="capability-tag">结构化提取</span>
+                        <span class="capability-tag">金额验证</span>
+                        <span class="capability-tag">多格式支持</span>
+                    </div>
+                </div>
+                
+                <div class="agent-card" onclick="selectAgent('contract')">
+                    <h3>📝 合同解析智能体</h3>
+                    <p>智能合同分析，提取关键条款和当事人信息</p>
+                    <div class="capabilities">
+                        <span class="capability-tag">条款提取</span>
+                        <span class="capability-tag">当事人识别</span>
+                        <span class="capability-tag">风险评估</span>
+                        <span class="capability-tag">期限计算</span>
+                    </div>
+                </div>
+                
+                <div class="agent-card" onclick="selectAgent('id_card')">
+                    <h3>🪪 身份证解析智能体</h3>
+                    <p>身份证智能识别，个人信息提取和验证</p>
+                    <div class="capabilities">
+                        <span class="capability-tag">OCR识别</span>
+                        <span class="capability-tag">信息验证</span>
+                        <span class="capability-tag">年龄计算</span>
+                        <span class="capability-tag">正反面识别</span>
+                    </div>
+                </div>
+                
+                <div class="agent-card" onclick="selectAgent('table')">
+                    <h3>📊 表格数据智能体</h3>
+                    <p>表格数据提取和分析，支持多种格式转换</p>
+                    <div class="capabilities">
+                        <span class="capability-tag">结构识别</span>
+                        <span class="capability-tag">数据清洗</span>
+                        <span class="capability-tag">统计分析</span>
+                        <span class="capability-tag">格式转换</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 智能解析 -->
+        <div id="parse-tab" class="content tab-content">
+            <div class="upload-area" id="parse-upload" onclick="document.getElementById('parse-file').click()">
+                <div class="upload-icon">📎</div>
+                <p>点击或拖拽文档到此处进行智能解析</p>
+                <p style="font-size: 14px; color: #666; margin-top: 5px;">
+                    支持PDF、图片、Office文档、CSV等多种格式
+                </p>
+            </div>
+            
+            <input type="file" id="parse-file" style="display: none;" 
+                   accept=".pdf,.jpg,.jpeg,.png,.bmp,.tiff,.webp,.docx,.doc,.xlsx,.xls,.csv,.txt"
+                   onchange="handleFileUpload(this, 'parse')">
+
+            <div class="file-info" id="parse-file-info">
+                <strong>已选择文件：</strong>
+                <span id="parse-filename"></span>
+                (<span id="parse-filesize"></span>)
+            </div>
+
+            <div class="form-group">
+                <label for="document-type">文档类型：</label>
+                <select id="document-type" class="form-control">
+                    <option value="auto">自动检测</option>
+                    <option value="invoice">发票</option>
+                    <option value="contract">合同</option>
+                    <option value="id_card">身份证</option>
+                    <option value="table">表格数据</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="parse-method">解析方法：</label>
+                <select id="parse-method" class="form-control">
+                    <option value="auto">自动选择</option>
+                    <option value="llm">LLM智能解析</option>
+                    <option value="ocr">OCR识别</option>
+                    <option value="text">文本解析</option>
+                </select>
+            </div>
+
+            <button class="btn" onclick="startParsing()" id="parse-btn" disabled>
+                🔍 开始解析
+            </button>
+
+            <div class="loading" id="parse-loading">
+                <div class="spinner"></div>
+                正在解析文档，请稍候...
+            </div>
+
+            <div class="results" id="parse-results">
+                <h3>📊 解析结果</h3>
+                <div id="parse-result-content"></div>
+            </div>
+        </div>
+
+        <!-- 批量处理 -->
+        <div id="batch-tab" class="content tab-content">
+            <div class="upload-area" onclick="document.getElementById('batch-files').click()">
+                <div class="upload-icon">📁</div>
+                <p>选择多个文档进行批量处理</p>
+                <p style="font-size: 14px; color: #666; margin-top: 5px;">
+                    可同时选择多个文件进行批量解析
+                </p>
+            </div>
+            
+            <input type="file" id="batch-files" style="display: none;" multiple
+                   accept=".pdf,.jpg,.jpeg,.png,.docx,.xlsx,.csv,.txt"
+                   onchange="handleBatchUpload(this)">
+
+            <div class="file-info" id="batch-file-info">
+                <strong>已选择文件：</strong>
+                <span id="batch-file-count">0</span> 个文件
+            </div>
+
+            <div class="form-group">
+                <label for="batch-document-type">文档类型：</label>
+                <select id="batch-document-type" class="form-control">
+                    <option value="auto">自动检测</option>
+                    <option value="invoice">发票</option>
+                    <option value="contract">合同</option>
+                    <option value="id_card">身份证</option>
+                    <option value="table">表格数据</option>
+                </select>
+            </div>
+
+            <button class="btn" onclick="startBatchProcessing()" id="batch-btn" disabled>
+                ⚡ 开始批量处理
+            </button>
+
+            <div class="loading" id="batch-loading">
+                <div class="spinner"></div>
+                正在批量处理文档，请稍候...
+            </div>
+
+            <div class="results" id="batch-results">
+                <h3>📈 批量处理结果</h3>
+                <div id="batch-result-content"></div>
+            </div>
+        </div>
+
+        <!-- 结构分析 -->
+        <div id="analysis-tab" class="content tab-content">
+            <div class="upload-area" onclick="document.getElementById('analysis-file').click()">
+                <div class="upload-icon">🔍</div>
+                <p>上传文档进行结构分析</p>
+                <p style="font-size: 14px; color: #666; margin-top: 5px;">
+                    分析文档类型、结构和推荐解析方案
+                </p>
+            </div>
+            
+            <input type="file" id="analysis-file" style="display: none;"
+                   accept=".pdf,.jpg,.jpeg,.png,.docx,.xlsx,.csv,.txt"
+                   onchange="handleAnalysisUpload(this)">
+
+            <div class="file-info" id="analysis-file-info">
+                <strong>分析文件：</strong>
+                <span id="analysis-filename"></span>
+            </div>
+
+            <button class="btn" onclick="startAnalysis()" id="analysis-btn" disabled>
+                🔬 开始分析
+            </button>
+
+            <div class="loading" id="analysis-loading">
+                <div class="spinner"></div>
+                正在分析文档结构...
+            </div>
+
+            <div class="results" id="analysis-results">
+                <h3>🎯 结构分析结果</h3>
+                <div id="analysis-result-content"></div>
+            </div>
+        </div>
+
+        <!-- 系统统计 -->
+        <div id="stats-tab" class="content tab-content">
+            <h3>📊 系统统计信息</h3>
+            <div class="loading" id="stats-loading">
+                <div class="spinner"></div>
+                正在加载统计信息...
+            </div>
+            <div id="stats-content"></div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let selectedFiles = {};
+        let batchFiles = [];
+        let analysisFile = null;
+
+        // API基础地址
+        const API_BASE = '/api/v1/agent';
+
+        // 标签页切换
+        function showTab(tabName) {
+            // 隐藏所有标签页内容
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // 移除所有标签的active状态
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // 显示选中的标签页
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+
+            // 加载特定标签页的数据
+            if (tabName === 'stats') {
+                loadSystemStats();
+            }
+        }
+
+        // 选择智能体
+        function selectAgent(agentType) {
+            document.getElementById('document-type').value = agentType;
+            showTab('parse');
+        }
+
+        // 文件大小格式化
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // 文件上传处理
+        function handleFileUpload(input, type) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                selectedFiles[type] = file;
+                
+                document.getElementById(`${type}-filename`).textContent = file.name;
+                if (document.getElementById(`${type}-filesize`)) {
+                    document.getElementById(`${type}-filesize`).textContent = formatFileSize(file.size);
+                }
+                document.getElementById(`${type}-file-info`).classList.add('show');
+                document.getElementById(`${type}-btn`).disabled = false;
+            }
+        }
+
+        // 批量上传处理
+        function handleBatchUpload(input) {
+            if (input.files && input.files.length > 0) {
+                batchFiles = Array.from(input.files);
+                document.getElementById('batch-file-count').textContent = batchFiles.length;
+                document.getElementById('batch-file-info').classList.add('show');
+                document.getElementById('batch-btn').disabled = false;
+            }
+        }
+
+        // 分析上传处理
+        function handleAnalysisUpload(input) {
+            if (input.files && input.files[0]) {
+                analysisFile = input.files[0];
+                document.getElementById('analysis-filename').textContent = analysisFile.name;
+                document.getElementById('analysis-file-info').classList.add('show');
+                document.getElementById('analysis-btn').disabled = false;
+            }
+        }
+
+        // 开始解析
+        async function startParsing() {
+            if (!selectedFiles.parse) {
+                alert('请先选择文件');
+                return;
+            }
+
+            const loadingEl = document.getElementById('parse-loading');
+            const resultsEl = document.getElementById('parse-results');
+            const btnEl = document.getElementById('parse-btn');
+
+            try {
+                loadingEl.classList.add('show');
+                resultsEl.classList.remove('show');
+                btnEl.disabled = true;
+
+                const formData = new FormData();
+                formData.append('file', selectedFiles.parse);
+                formData.append('document_type', document.getElementById('document-type').value);
+                formData.append('parse_method', document.getElementById('parse-method').value);
+
+                const response = await fetch(`${API_BASE}/document/upload-and-parse`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                displayParseResults(result);
+
+            } catch (error) {
+                console.error('解析失败:', error);
+                alert('文档解析失败，请检查网络连接');
+            } finally {
+                loadingEl.classList.remove('show');
+                btnEl.disabled = false;
+            }
+        }
+
+        // 显示解析结果
+        function displayParseResults(result) {
+            const contentEl = document.getElementById('parse-result-content');
+            const resultsEl = document.getElementById('parse-results');
+
+            if (result.success) {
+                const data = result.result;
+                const structuredData = data.structured_data || {};
+                
+                let html = `
+                    <div class="result-item">
+                        <div class="result-header">
+                            <span class="result-title">✅ 解析成功 - ${data.document_type}</span>
+                            <span class="status-badge status-success">成功</span>
+                        </div>
+                        <div class="info-grid">
+                            <div class="info-card">
+                                <h4>📋 基本信息</h4>
+                                <div class="field-grid">
+                                    <div class="field-item">
+                                        <span class="field-label">文档类型:</span>
+                                        <span class="field-value">${data.document_type}</span>
+                                    </div>
+                                    <div class="field-item">
+                                        <span class="field-label">解析方法:</span>
+                                        <span class="field-value">${data.parse_method}</span>
+                                    </div>
+                                    <div class="field-item">
+                                        <span class="field-label">置信度:</span>
+                                        <span class="field-value">${(data.confidence * 100).toFixed(1)}%</span>
+                                    </div>
+                                    <div class="field-item">
+                                        <span class="field-label">处理时间:</span>
+                                        <span class="field-value">${data.processing_time_ms}ms</span>
+                                    </div>
+                                </div>
+                            </div>
+                `;
+
+                // 根据不同文档类型显示不同内容
+                if (data.document_type === 'invoice') {
+                    html += generateInvoiceDisplay(structuredData);
+                } else if (data.document_type === 'contract') {
+                    html += generateContractDisplay(structuredData);
+                } else if (data.document_type === 'id_card') {
+                    html += generateIdCardDisplay(structuredData);
+                } else if (data.document_type === 'table') {
+                    html += generateTableDisplay(structuredData);
+                }
+
+                html += `
+                        </div>
+                        <div style="margin-top: 20px; font-size: 12px; color: #666; text-align: right;">
+                            解析时间: ${data.extraction_time}
+                        </div>
+                    </div>
+                `;
+
+                contentEl.innerHTML = html;
+            } else {
+                contentEl.innerHTML = `
+                    <div class="result-item">
+                        <div class="result-header">
+                            <span class="result-title">❌ 解析失败</span>
+                            <span class="status-badge status-error">失败</span>
+                        </div>
+                        <p style="color: #721c24; margin-top: 10px;">
+                            ${result.error || '未知错误'}
+                        </p>
+                    </div>
+                `;
+            }
+
+            resultsEl.classList.add('show');
+        }
+
+        // 生成发票显示内容
+        function generateInvoiceDisplay(data) {
+            return `
+                <div class="info-card">
+                    <h4>💰 发票信息</h4>
+                    <div class="field-grid">
+                        <div class="field-item">
+                            <span class="field-label">发票号码:</span>
+                            <span class="field-value">${data.invoice_number || '未识别'}</span>
+                        </div>
+                        <div class="field-item">
+                            <span class="field-label">开票日期:</span>
+                            <span class="field-value">${data.invoice_date || '未识别'}</span>
+                        </div>
+                        <div class="field-item">
+                            <span class="field-label">价税合计:</span>
+                            <span class="field-value">¥${data.total_amount || '0.00'}</span>
+                        </div>
+                        <div class="field-item">
+                            <span class="field-label">发票类型:</span>
+                            <span class="field-value">${data.invoice_type || '未识别'}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <h4>🏢 当事方信息</h4>
+                    <div class="field-grid">
+                        <div class="field-item">
+                            <span class="field-label">销售方:</span>
+                            <span class="field-value">${data.seller_name || '未识别'}</span>
+                        </div>
+                        <div class="field-item">
+                            <span class="field-label">购买方:</span>
+                            <span class="field-value">${data.buyer_name || '未识别'}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 生成合同显示内容
+        function generateContractDisplay(data) {
+            return `
+                <div class="info-card">
+                    <h4>📝 合同信息</h4>
+                    <div class="field-grid">
+                        <div class="field-item">
+                            <span class="field-label">合同标题:</span>
+                            <span class="field-value">${data.contract_title || '未识别'}</span>
+                        </div>
+                        <div class="field-item">
+                            <span class="field-label">合同编号:</span>
+                            <span class="field-value">${data.contract_number || '未识别'}</span>
+                        </div>
+                        <div class="field-item">
+                            <span class="field-label">合同金额:</span>
+                            <span class="field-value">¥${data.contract_amount || '0.00'}</span>
+                        </div>
+                        <div class="field-item">
+                            <span class="field-label">签署日期:</span>
+                            <span class="field-value">${data.sign_date || '未识别'}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <h4>👥 合同当事方</h4>
+                    <div class="field-grid">
+                        <div class="field-item">
+                            <span class="field-label">甲方:</span>
+                            <span class="field-value">${data.party_a_name || '未识别'}</span>
+                        </div>
+                        <div class="field-item">
+                            <span class="field-label">乙方:</span>
+                            <span class="field-value">${data.party_b_name || '未识别'}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 生成身份证显示内容
+        function generateIdCardDisplay(data) {
+            return `
+                <div class="info-card">
+                    <h4>👤 个人信息</h4>
+                    <div class="field-grid">
+                        <div class="field-item">
+                            <span class="field-label">姓名:</span>
+                            <span class="field-value">${data.name || '未识别'}</span>
+                        </div>
+                        <div class="field-item">
+                            <span class="field-label">身份证号:</span>
+                            <span class="field-value">${data.id_number || '未识别'}</span>
+                        </div>
+                        <div class="field-item">
+                            <span class="field-label">性别:</span>
+                            <span class="field-value">${data.gender || '未识别'}</span>
+                        </div>
+                        <div class="field-item">
+                            <span class="field-label">年龄:</span>
+                            <span class="field-value">${data.age || '未知'}岁</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <h4>🏠 详细信息</h4>
+                    <div class="field-grid">
+                        <div class="field-item">
+                            <span class="field-label">民族:</span>
+                            <span class="field-value">${data.ethnicity || '未识别'}</span>
+                        </div>
+                        <div class="field-item">
+                            <span class="field-label">出生地:</span>
+                            <span class="field-value">${data.birth_place || '未识别'}</span>
+                        </div>
+                        <div class="field-item">
+                            <span class="field-label">生肖:</span>
+                            <span class="field-value">${data.zodiac || '未知'}</span>
+                        </div>
+                        <div class="field-item">
+                            <span class="field-label">星座:</span>
+                            <span class="field-value">${data.constellation || '未知'}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 生成表格显示内容
+        function generateTableDisplay(data) {
+            let html = `
+                <div class="info-card">
+                    <h4>📊 表格概览</h4>
+                    <div class="field-grid">
+                        <div class="field-item">
+                            <span class="field-label">表格数量:</span>
+                            <span class="field-value">${data.table_count || 0}</span>
+                        </div>
+            `;
+
+            if (data.summary) {
+                html += `
+                        <div class="field-item">
+                            <span class="field-label">总行数:</span>
+                            <span class="field-value">${data.summary.total_rows || 0}</span>
+                        </div>
+                        <div class="field-item">
+                            <span class="field-label">总列数:</span>
+                            <span class="field-value">${data.summary.total_columns || 0}</span>
+                        </div>
+                        <div class="field-item">
+                            <span class="field-label">数值列:</span>
+                            <span class="field-value">${data.summary.numeric_columns || 0}</span>
+                        </div>
+                `;
+            }
+
+            html += `
+                    </div>
+                </div>
+            `;
+
+            // 显示表格详情
+            if (data.tables && data.tables.length > 0) {
+                data.tables.forEach((table, index) => {
+                    html += `
+                        <div class="info-card">
+                            <h4>📈 ${table.title || `表格 ${index + 1}`}</h4>
+                            <p><strong>行数:</strong> ${table.row_count} | <strong>列数:</strong> ${table.column_count}</p>
+                            ${table.headers ? `<p><strong>列标题:</strong> ${table.headers.join(', ')}</p>` : ''}
+                        </div>
+                    `;
+                });
+            }
+
+            return html;
+        }
+
+        // 批量处理
+        async function startBatchProcessing() {
+            if (batchFiles.length === 0) {
+                alert('请先选择文件');
+                return;
+            }
+
+            const loadingEl = document.getElementById('batch-loading');
+            const resultsEl = document.getElementById('batch-results');
+            const btnEl = document.getElementById('batch-btn');
+
+            try {
+                loadingEl.classList.add('show');
+                resultsEl.classList.remove('show');
+                btnEl.disabled = true;
+
+                const results = [];
+                const documentType = document.getElementById('batch-document-type').value;
+
+                for (let i = 0; i < batchFiles.length; i++) {
+                    const file = batchFiles[i];
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('document_type', documentType);
+                    formData.append('parse_method', 'auto');
+
+                    const response = await fetch(`${API_BASE}/document/upload-and-parse`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+                    results.push({
+                        filename: file.name,
+                        result: result
+                    });
+                }
+
+                displayBatchResults(results);
+
+            } catch (error) {
+                console.error('批量处理失败:', error);
+                alert('批量处理失败，请检查网络连接');
+            } finally {
+                loadingEl.classList.remove('show');
+                btnEl.disabled = false;
+            }
+        }
+
+        // 显示批量结果
+        function displayBatchResults(results) {
+            const contentEl = document.getElementById('batch-result-content');
+            const resultsEl = document.getElementById('batch-results');
+
+            const successCount = results.filter(r => r.result.success).length;
+            const failedCount = results.length - successCount;
+
+            let html = `
+                <div class="result-item">
+                    <div class="result-header">
+                        <span class="result-title">📊 批量处理完成</span>
+                        <span class="status-badge status-success">完成</span>
+                    </div>
+                    <div class="info-grid">
+                        <div class="info-card">
+                            <h4>📈 处理统计</h4>
+                            <div class="field-grid">
+                                <div class="field-item">
+                                    <span class="field-label">总文件数:</span>
+                                    <span class="field-value">${results.length}</span>
+                                </div>
+                                <div class="field-item">
+                                    <span class="field-label">成功:</span>
+                                    <span class="field-value">${successCount}</span>
+                                </div>
+                                <div class="field-item">
+                                    <span class="field-label">失败:</span>
+                                    <span class="field-value">${failedCount}</span>
+                                </div>
+                                <div class="field-item">
+                                    <span class="field-label">成功率:</span>
+                                    <span class="field-value">${((successCount / results.length) * 100).toFixed(1)}%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 显示每个文件的结果
+            results.forEach((item, index) => {
+                const success = item.result.success;
+                html += `
+                    <div class="result-item">
+                        <div class="result-header">
+                            <span class="result-title">${index + 1}. ${item.filename}</span>
+                            <span class="status-badge ${success ? 'status-success' : 'status-error'}">
+                                ${success ? '成功' : '失败'}
+                            </span>
+                        </div>
+                        ${success ? `
+                            <p>文档类型: ${item.result.result.document_type} | 
+                            置信度: ${(item.result.result.confidence * 100).toFixed(1)}% | 
+                            处理时间: ${item.result.result.processing_time_ms}ms</p>
+                        ` : `
+                            <p style="color: #721c24;">${item.result.error || '处理失败'}</p>
+                        `}
+                    </div>
+                `;
+            });
+
+            contentEl.innerHTML = html;
+            resultsEl.classList.add('show');
+        }
+
+        // 开始结构分析
+        async function startAnalysis() {
+            if (!analysisFile) {
+                alert('请先选择文件');
+                return;
+            }
+
+            const loadingEl = document.getElementById('analysis-loading');
+            const resultsEl = document.getElementById('analysis-results');
+            const btnEl = document.getElementById('analysis-btn');
+
+            try {
+                loadingEl.classList.add('show');
+                resultsEl.classList.remove('show');
+                btnEl.disabled = true;
+
+                const formData = new FormData();
+                formData.append('file', analysisFile);
+
+                const response = await fetch(`${API_BASE}/document/analyze-structure`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                displayAnalysisResults(result);
+
+            } catch (error) {
+                console.error('结构分析失败:', error);
+                alert('结构分析失败，请检查网络连接');
+            } finally {
+                loadingEl.classList.remove('show');
+                btnEl.disabled = false;
+            }
+        }
+
+        // 显示分析结果
+        function displayAnalysisResults(result) {
+            const contentEl = document.getElementById('analysis-result-content');
+            const resultsEl = document.getElementById('analysis-results');
+
+            if (result.success) {
+                const data = result.result;
+                
+                let html = `
+                    <div class="result-item">
+                        <div class="result-header">
+                            <span class="result-title">🎯 结构分析完成</span>
+                            <span class="status-badge status-success">成功</span>
+                        </div>
+                        <div class="info-grid">
+                            <div class="info-card">
+                                <h4>📄 文档信息</h4>
+                                <div class="field-grid">
+                                    <div class="field-item">
+                                        <span class="field-label">检测类型:</span>
+                                        <span class="field-value">${data.detected_type}</span>
+                                    </div>
+                                    <div class="field-item">
+                                        <span class="field-label">文件名:</span>
+                                        <span class="field-value">${data.file_info.filename}</span>
+                                    </div>
+                                    <div class="field-item">
+                                        <span class="field-label">文件大小:</span>
+                                        <span class="field-value">${formatFileSize(data.file_info.size)}</span>
+                                    </div>
+                                    <div class="field-item">
+                                        <span class="field-label">复杂度:</span>
+                                        <span class="field-value">${data.recommendations.complexity}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="info-card">
+                                <h4>🤖 匹配智能体</h4>
+                                <p><strong>名称:</strong> ${data.agent_info.name}</p>
+                                <p><strong>核心能力:</strong></p>
+                                <div class="capabilities">
+                                    ${data.agent_info.capabilities.map(cap => `<span class="capability-tag">${cap}</span>`).join('')}
+                                </div>
+                            </div>
+                            <div class="info-card">
+                                <h4>💡 推荐方案</h4>
+                                <div class="field-grid">
+                                    <div class="field-item">
+                                        <span class="field-label">推荐解析方法:</span>
+                                        <span class="field-value">${data.recommendations.best_parse_method}</span>
+                                    </div>
+                                    <div class="field-item">
+                                        <span class="field-label">预期字段数:</span>
+                                        <span class="field-value">${data.recommendations.expected_fields}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                contentEl.innerHTML = html;
+            } else {
+                contentEl.innerHTML = `
+                    <div class="result-item">
+                        <div class="result-header">
+                            <span class="result-title">❌ 分析失败</span>
+                            <span class="status-badge status-error">失败</span>
+                        </div>
+                        <p style="color: #721c24; margin-top: 10px;">
+                            ${result.error || '未知错误'}
+                        </p>
+                    </div>
+                `;
+            }
+
+            resultsEl.classList.add('show');
+        }
+
+        // 加载系统统计
+        async function loadSystemStats() {
+            const loadingEl = document.getElementById('stats-loading');
+            const contentEl = document.getElementById('stats-content');
+
+            try {
+                loadingEl.classList.add('show');
+
+                const response = await fetch(`${API_BASE}/document/stats`);
+                const result = await response.json();
+
+                if (result.success) {
+                    const data = result.result;
+                    
+                    let html = `
+                        <div class="info-grid">
+                            <div class="info-card">
+                                <h4>🏠 系统概览</h4>
+                                <div class="field-grid">
+                                    <div class="field-item">
+                                        <span class="field-label">支持的文档类型:</span>
+                                        <span class="field-value">${data.overview.total_supported_types}</span>
+                                    </div>
+                                    <div class="field-item">
+                                        <span class="field-label">缓存实例数:</span>
+                                        <span class="field-value">${data.overview.cached_instances}</span>
+                                    </div>
+                                </div>
+                            </div>
+                    `;
+
+                    // 智能体摘要
+                    html += `
+                            <div class="info-card">
+                                <h4>🤖 智能体统计</h4>
+                                <div class="field-grid">
+                    `;
+                    
+                    Object.entries(data.agents_summary).forEach(([type, info]) => {
+                        html += `
+                                    <div class="field-item">
+                                        <span class="field-label">${info.name}:</span>
+                                        <span class="field-value">${info.capabilities_count} 项能力</span>
+                                    </div>
+                        `;
+                    });
+
+                    html += `
+                                </div>
+                            </div>
+                    `;
+
+                    // 能力分布
+                    html += `
+                            <div class="info-card">
+                                <h4>⚡ 能力分布统计</h4>
+                                <div class="field-grid">
+                    `;
+                    
+                    Object.entries(data.capabilities_distribution).forEach(([capability, count]) => {
+                        html += `
+                                    <div class="field-item">
+                                        <span class="field-label">${capability}:</span>
+                                        <span class="field-value">${count} 个智能体</span>
+                                    </div>
+                        `;
+                    });
+
+                    html += `
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    contentEl.innerHTML = html;
+                } else {
+                    contentEl.innerHTML = `
+                        <div class="result-item">
+                            <div class="result-header">
+                                <span class="result-title">❌ 加载失败</span>
+                                <span class="status-badge status-error">失败</span>
+                            </div>
+                            <p style="color: #721c24; margin-top: 10px;">
+                                ${result.error || '无法加载统计信息'}
+                            </p>
+                        </div>
+                    `;
+                }
+
+            } catch (error) {
+                console.error('加载统计信息失败:', error);
+                contentEl.innerHTML = `
+                    <div class="result-item">
+                        <div class="result-header">
+                            <span class="result-title">❌ 网络错误</span>
+                            <span class="status-badge status-error">错误</span>
+                        </div>
+                        <p style="color: #721c24; margin-top: 10px;">
+                            网络连接失败，请检查网络连接
+                        </p>
+                    </div>
+                `;
+            } finally {
+                loadingEl.classList.remove('show');
+            }
+        }
+
+        // 拖拽上传支持
+        function setupDragAndDrop() {
+            const uploadAreas = document.querySelectorAll('.upload-area');
+            
+            uploadAreas.forEach(area => {
+                area.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    area.classList.add('dragover');
+                });
+
+                area.addEventListener('dragleave', () => {
+                    area.classList.remove('dragover');
+                });
+
+                area.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    area.classList.remove('dragover');
+                    
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        // 根据当前标签页处理文件
+                        const activeTab = document.querySelector('.tab-content.active').id;
+                        
+                        if (activeTab === 'parse-tab') {
+                            const input = document.getElementById('parse-file');
+                            input.files = files;
+                            handleFileUpload(input, 'parse');
+                        } else if (activeTab === 'batch-tab') {
+                            const input = document.getElementById('batch-files');
+                            input.files = files;
+                            handleBatchUpload(input);
+                        } else if (activeTab === 'analysis-tab') {
+                            const input = document.getElementById('analysis-file');
+                            input.files = files;
+                            handleAnalysisUpload(input);
+                        }
+                    }
+                });
+            });
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            setupDragAndDrop();
+        });
+    </script>
+</body>
+</html>
