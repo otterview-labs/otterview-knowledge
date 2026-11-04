@@ -10,6 +10,22 @@ OtterView Knowledge is a self-hosted workspace for searching your documents. Upl
 
 The standalone workspace uses one shared operator account. It is intended for a personal workspace or a trusted team; it does not provide per-user accounts or multi-tenant isolation.
 
+## Screenshots
+
+These screenshots use fictional collections and documents.
+
+**Sign-in page**
+
+![OtterView Knowledge sign-in page with empty account and password fields](docs/screenshots/login.png)
+
+**Workspace**
+
+![OtterView Knowledge home page with demo collections and documents](docs/screenshots/workspace.png)
+
+**Search results and source text**
+
+![Search results on the left and the original document on the right, with the matching passage highlighted](docs/screenshots/search-and-source.png)
+
 ## Quick start
 
 Requirements: Docker with Compose, Python 3.11 or newer for the account setup script, and access to chat and embedding endpoints. The database is included in the Compose stack and is not published on the host.
@@ -20,7 +36,7 @@ Requirements: Docker with Compose, Python 3.11 or newer for the account setup sc
    cp .env.example .env
    install -d -m 700 .workspace-auth
    python3 scripts/configure_workspace_auth.py .workspace-auth/account.json \
-     --origin http://127.0.0.1:18006 --username workspace-admin
+     --origin http://127.0.0.1:18006 --username your-local-username
    ```
 
 2. Edit `.env`:
